@@ -39,6 +39,7 @@ func Handler(st *app.Station, opt Options) http.Handler {
 	mux := http.NewServeMux()
 	files, _ := fs.Sub(static, "static")
 	mux.Handle("GET /", http.FileServerFS(files))
+	mux.HandleFunc("GET /tiles/{z}/{x}/{y}", tileHandler(st))
 
 	mux.HandleFunc("GET /api/status", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, st.Status())

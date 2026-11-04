@@ -198,7 +198,7 @@ function drawMap(o, paths) {
   if (mapState !== "ready" || !window.L) return;
   if (!map) {
     map = L.map("map", { worldCopyJump: true }).setView([o.home_lat, o.home_lon], 7);
-    const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    const tiles = L.tileLayer("tiles/{z}/{x}/{y}",
       { maxZoom: 13, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
     tiles.on("tileload", () => tileOK++);
     tiles.on("tileerror", () => { if (++tileErr >= 6 && !tileOK) { map.remove(); map = null; mapOff("Map tiles need internet; showing the plots only."); } });
