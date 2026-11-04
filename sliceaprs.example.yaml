@@ -1,11 +1,11 @@
 # SliceAPRS configuration. Everything here can also be set in the GUI.
-callsign: VA3MW            # base call; packets from any of its SSIDs never count
-grid: FN25dk               # 4, 6 or 8 characters; distances are measured from its centre
+callsign: ""               # your base call; packets from any of its SSIDs never count
+grid: ""                   # 4, 6 or 8 characters; distances are measured from its centre
 radio:
   ip: ""                   # blank: find the radio on the LAN
   serial: ""               # with discovery: pick this radio
 frequency_mhz: 144.390     # 144.800 in Europe
-rxant: ""                  # e.g. XVTA; blank leaves the radio's choice
+rxant: ""                  # e.g. XVTA; blank: the radio's choice, or XVTA on a transverter band
 daxiq:
   channel: 2               # FlexWSPR normally uses 1
   swap_iq: false
