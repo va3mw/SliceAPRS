@@ -6,6 +6,8 @@ APRS stations beacon their positions all the time, so they make a dense network 
 
 Receive only: it never transmits. SmartSDR and DAX do not need to be running.
 
+**User guide and downloads:** https://va3mw.github.io/SliceAPRS/
+
 ![Openings tab: 2 m status, farthest direct stations, map of direct paths and bearing/distance plot](Openings.png)
 
 ![Stations tab: every station heard, its position, distance, bearing and how it was heard](Stations.png)

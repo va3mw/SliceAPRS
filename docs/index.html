@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SliceAPRS</title>
+<meta name="description" content="SliceAPRS: spot 2 m openings with APRS through a FlexRadio, on Windows, Debian and Raspberry Pi. Receive only.">
+<style>
+:root {
+  --aub: #3f0e40; --aub-2: #350d36; --aub-3: #522653; --aub-ink: #fff; --aub-muted: #cfc3cf;
+  --bg: #f8f8f8; --panel: #fff; --line: #e2dfe2; --text: #1d1c1d; --muted: #616061;
+  --accent: #1264a3; --go: #007a5a; --go-hover: #148567;
+  --c-blue: #36c5f0; --c-green: #2eb67d; --c-yellow: #ecb22e; --c-red: #e01e5a;
+  --code: #f1edf1;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --aub: #350d36; --aub-2: #2a0a2b; --aub-ink: #e8e8e8; --aub-muted: #a8a0a8;
+    --bg: #1a1d21; --panel: #222529; --line: #35373b; --text: #d1d2d3; --muted: #9a9b9e;
+    --accent: #1d9bd1; --code: #2c2d30; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+code, pre { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 14px; }
+code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+pre { background: var(--code); padding: 12px 14px; border-radius: 8px; overflow-x: auto; line-height: 1.5; }
+pre code { background: none; padding: 0; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+header.hero { background: var(--aub); color: var(--aub-ink); padding: 48px 0 40px; }
+.hero h1 { margin: 0; font-size: 44px; letter-spacing: -.5px; }
+.hero p.lead { font-size: 20px; color: var(--aub-muted); max-width: 720px; margin: 10px 0 24px; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-block; padding: 10px 18px; border-radius: 8px; font-weight: 700; text-decoration: none; }
+.btn.go { background: var(--go); color: #fff; }
+.btn.go:hover { background: var(--go-hover); }
+.btn.ghost { border: 1px solid rgba(255,255,255,.35); color: var(--aub-ink); }
+.btn.ghost:hover { background: var(--aub-3); }
+.hero .small { color: var(--aub-muted); font-size: 14px; margin-top: 12px; }
+nav.bar { background: var(--aub-2); position: sticky; top: 0; z-index: 2; }
+nav.bar .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-top: 6px; padding-bottom: 6px; }
+nav.bar a { color: var(--aub-muted); text-decoration: none; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; font-size: 15px; }
+nav.bar a:hover { background: var(--aub-3); color: var(--aub-ink); }
+
+section { padding: 40px 0 8px; }
+h2 { font-size: 28px; margin: 0 0 12px; }
+h3 { font-size: 19px; margin: 24px 0 6px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--c-blue); border-radius: 10px; padding: 14px 16px; }
+.card:nth-child(4n+2) { border-top-color: var(--c-green); }
+.card:nth-child(4n+3) { border-top-color: var(--c-yellow); }
+.card:nth-child(4n+4) { border-top-color: var(--c-red); }
+.card h3 { margin: 0 0 4px; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+figure { margin: 20px 0; }
+figure img { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); display: block; background: #fff; }
+figcaption { color: var(--muted); font-size: 14px; margin-top: 6px; }
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 14px; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+.scroll { overflow-x: auto; }
+.steps { counter-reset: s; list-style: none; padding: 0; }
+.steps li { counter-increment: s; position: relative; padding: 0 0 12px 44px; }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 800px) { .two { grid-template-columns: 1fr; } .hero h1 { font-size: 34px; } }
+.note { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--c-yellow); border-radius: 8px; padding: 10px 14px; }
+.lv { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>SliceAPRS</h1>
+    <p class="lead">Spot 2 m openings with APRS. SliceAPRS listens to APRS through your FlexRadio, works out which stations you really heard directly, learns your normal range, and tells you when the band opens.</p>
+    <div class="btns">
+      <a class="btn go" href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-gui-windows-amd64.exe">Download for Windows</a>
+      <a class="btn ghost" href="#download">Raspberry Pi and Linux</a>
+      <a class="btn ghost" href="https://github.com/va3mw/SliceAPRS">Source on GitHub</a>
+    </div>
+    <p class="small"><b style="color:var(--aub-ink)">Receive only:</b> SliceAPRS never keys the radio, and it is not an iGate. Nothing is sent to APRS-IS.</p>
+    <p class="small"><b style="color:var(--aub-ink)">No SmartSDR needed:</b> SliceAPRS talks to the radio directly, so SmartSDR and DAX don't have to be running.</p>
+    <p class="small">Free and open source (MIT). Windows 10/11, Debian, Raspberry Pi OS. Needs a FLEX-6000 series radio that receives 2 m: a FLEX-6700, or another model with a 2 m transverter.</p>
+  </div>
+</header>
+
+<nav class="bar"><div class="wrap">
+  <a href="#features">Features</a>
+  <a href="#openings">Openings</a>
+  <a href="#heard">Heard directly</a>
+  <a href="#download">Download</a>
+  <a href="#windows">Windows</a>
+  <a href="#pi">Raspberry Pi</a>
+  <a href="#faq">Questions</a>
+  <a href="#credits">Credits</a>
+</div></nav>
+
+<main class="wrap">
+
+<section id="features">
+  <h2>What it does</h2>
+  <p>APRS stations beacon their positions all the time, so they make a dense network of 2 m beacons. When the band opens for tropo or another enhancement, you start to hear stations directly from much farther away than usual. SliceAPRS watches for that.</p>
+  <div class="cards">
+    <div class="card"><h3>No audio cables</h3><p>Opens its own panadapter and DAX IQ stream at 144.390 MHz (144.800 in Europe), so your slices stay free.</p></div>
+    <div class="card"><h3>Built-in decoder</h3><p>Decodes 1200 baud APRS itself: positions, compressed, Mic-E, objects, items, status, weather and messages. No TNC or sound card.</p></div>
+    <div class="card"><h3>Who you really heard</h3><p>A packet relayed by a local digipeater counts as the digipeater, not the far station that sent it.</p></div>
+    <div class="card"><h3>Your normal range</h3><p>Learns how far you usually hear, hour by hour, over the last 14 days.</p></div>
+    <div class="card"><h3>Openings</h3><p>Flags Enhanced and Open conditions with direction, strength, start and end, and keeps a log.</p></div>
+    <div class="card"><h3>Grid squares</h3><p>Keeps every 4-character grid square heard directly, on a grid map and in a table.</p></div>
+    <div class="card"><h3>Desktop or headless</h3><p>A Windows desktop app, or a headless program for a Raspberry Pi that you set up from any web browser.</p></div>
+    <div class="card"><h3>Watch from anywhere</h3><p>The same screens are served as a web page, so you can check from a phone or another PC.</p></div>
+  </div>
+</section>
+
+<section id="openings">
+  <h2>Openings: a screen to leave up</h2>
+  <figure>
+    <img src="openings.png" alt="Openings tab: 2 m status, farthest direct stations, a map of direct paths and a bearing and distance plot" loading="lazy">
+    <figcaption><b>Openings.</b> Status now, the farthest stations heard directly in the last 15 and 60 minutes, your normal range for this hour, a map of the direct paths and a polar plot of bearing and distance. Further down: the last 24 hours against normal, and the log of openings.</figcaption>
+  </figure>
+  <p>A <b>far station</b> is one heard directly in the last 30 minutes beyond your normal range times the sensitivity factor (and at least 40 km beyond it at medium), and not one of your usual stations (heard directly on 3 or more days).</p>
+  <div class="scroll"><table>
+    <tr><th>Status</th><th>Means (medium sensitivity)</th></tr>
+    <tr><td><span class="lv" style="background:#ebe8eb"></span>Normal</td><td>Nothing beyond your normal range</td></tr>
+    <tr><td><span class="lv" style="background:#ecb22e"></span>Enhanced</td><td>At least 1 far station</td></tr>
+    <tr><td><span class="lv" style="background:#2eb67d"></span>Open</td><td>3 or more far stations, or any direct path over the set distance (300 km to start)</td></tr>
+  </table></div>
+  <p>Sensitivity changes the factor and the counts: low is 1.5× normal and needs 2 far stations for Enhanced and 4 for Open; medium is 1.3×, 1 and 3; high is 1.15×, 1 and 2. Your normal range needs a day or two of listening. Until then only the distance rule works.</p>
+  <figure>
+    <img src="stations.png" alt="Stations tab: every station heard with its position, distance, bearing and how it was heard" loading="lazy">
+    <figcaption><b>Stations.</b> Every station heard, with its last position, distance and bearing, whether it was heard directly or through a digipeater, and its best direct distance.</figcaption>
+  </figure>
+</section>
+
+<section id="heard">
+  <h2>Who was heard directly</h2>
+  <p>Each APRS packet carries its digipeater path, and each digipeater that repeats it marks it as repeated. The signal that reached your antenna came from the last digipeater that marked it, or from the sender if no digipeater has repeated it yet.</p>
+  <ul>
+    <li>A relayed packet is measured to the digipeater, never to the original sender. Digipeater positions are learned from their own beacons; until a digipeater beacons, its distance is unknown.</li>
+    <li>Not counted: packets from the internet (third-party, TCPIP), satellite and ISS paths, packets repeated by a digipeater that did not add its call, and your own callsign.</li>
+    <li>A position that jumps too far, too fast is held until a second report agrees.</li>
+  </ul>
+</section>
+
+<section id="download">
+  <h2>Download</h2>
+  <p>From the <a href="https://github.com/va3mw/SliceAPRS/releases/latest">latest release</a>:</p>
+  <div class="scroll"><table>
+    <tr><th>File</th><th>For</th></tr>
+    <tr><td><a href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-gui-windows-amd64.exe">sliceaprs-gui-windows-amd64.exe</a></td><td>Windows desktop app (most people want this one)</td></tr>
+    <tr><td><a href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-linux-arm64">sliceaprs-linux-arm64</a></td><td>Raspberry Pi OS 64-bit (Pi 3, 4, 5), headless</td></tr>
+    <tr><td><a href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-linux-arm">sliceaprs-linux-arm</a></td><td>Raspberry Pi OS 32-bit, headless</td></tr>
+    <tr><td><a href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-linux-amd64">sliceaprs-linux-amd64</a></td><td>Debian or Ubuntu on a PC, headless</td></tr>
+    <tr><td><a href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-windows-amd64.exe">sliceaprs-windows-amd64.exe</a></td><td>Windows, headless (web page only)</td></tr>
+    <tr><td><a href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs.example.yaml">sliceaprs.example.yaml</a></td><td>A sample settings file</td></tr>
+  </table></div>
+  <p>Windows may warn that the program is from an unknown publisher, because it is not code-signed. Choose <i>More info → Run anyway</i>.</p>
+</section>
+
+<section id="windows">
+  <h2>Getting started on Windows</h2>
+  <ol class="steps">
+    <li>Set up the radio for 2 m. A FLEX-6700 covers it. A FLEX-6600, 6400 or other model needs a 2 m transverter in the radio's XVTR settings.</li>
+    <li>Run <code>sliceaprs-gui-windows-amd64.exe</code>. On first start it opens on <b>Settings</b>.</li>
+    <li>Enter your callsign and grid. Click <b>Find radios</b> and pick yours, or type its IP address.</li>
+    <li>Check the frequency (144.390 MHz in North America, 144.800 MHz in Europe). Leave <b>Receive antenna</b> on the radio's choice to use the transverter port (XVTA), or pick one.</li>
+    <li>Pick a <b>DAX IQ channel</b> that no other program uses. SliceAPRS checks before it starts and tells you if the channel is taken.</li>
+    <li>Press <b>Save and restart</b>. Packets appear on the <b>Packets</b> tab as they are heard.</li>
+  </ol>
+  <p>Settings are saved in <code>C:\ProgramData\SliceAPRS\sliceaprs.yaml</code>. Packets, paths, openings and the log go to <code>C:\ProgramData\SliceAPRS\data</code>. While the app runs, it also serves its screens at <a href="http://localhost:8081">http://localhost:8081</a>.</p>
+</section>
+
+<section id="pi">
+  <h2>Running headless on a Raspberry Pi</h2>
+  <p>Install the program, give your user the settings and data folders, and start it:</p>
+<pre><code>wget https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-linux-arm64
+sudo install sliceaprs-linux-arm64 /usr/local/bin/sliceaprs
+sudo mkdir -p /etc/sliceaprs /var/lib/sliceaprs
+sudo chown $USER /etc/sliceaprs /var/lib/sliceaprs
+sliceaprs</code></pre>
+  <p>Then browse to <code>http://&lt;pi-name&gt;:8081</code> from any computer and set it up there, just as on Windows. Settings go to <code>/etc/sliceaprs/sliceaprs.yaml</code> and history to <code>/var/lib/sliceaprs</code>. On 32-bit Raspberry Pi OS, use <code>sliceaprs-linux-arm</code> instead. No systemd service file is included yet.</p>
+  <p class="note">The web page has no password. Keep port 8081 on your own network. Over the network, the page can change station, radio, frequency, antenna and opening settings, but not the data folder or the web address.</p>
+</section>
+
+<section id="faq">
+  <h2>Questions</h2>
+  <h3>Which radios does it work with?</h3>
+  <p>FLEX-6000 series radios that can receive 2 m. It has been run on a FLEX-6600M with a 2 m transverter on XVTA, firmware v4.4.0. SliceAPRS connects as a GUI client, so on radios with few client connections SmartSDR may not be able to connect at the same time.</p>
+  <h3>Can it run next to FlexWSPR or SmartSDR?</h3>
+  <p>Yes, as long as each uses its own DAX IQ channel. SliceAPRS uses channel 2 by default and refuses to start on a channel another program is using.</p>
+  <h3>Is it an iGate or a digipeater?</h3>
+  <p>No. SliceAPRS only listens. It never transmits and sends nothing to APRS-IS.</p>
+  <h3>Why do far stations not count as an opening?</h3>
+  <p>Most far stations reach you through a digipeater. SliceAPRS only counts the station whose signal actually reached your antenna, so a local digipeater relaying a far station is a local path.</p>
+  <h3>What is sent over the internet?</h3>
+  <p>Only map tiles, fetched from OpenStreetMap when you look at the map and kept in the data folder for a week. Without internet the map is replaced by the plots.</p>
+</section>
+
+<section id="credits">
+  <h2>Credits and license</h2>
+  <ul>
+    <li><b>APRS:</b> Bob Bruninga, WB4APR (SK), and the APRS protocol reference. <b>AX.25:</b> the ARRL/TAPR link-layer protocol.</li>
+    <li>The demodulator follows the approach of <a href="https://github.com/wb2osz/direwolf">Dire Wolf</a> by John Langner, WB2OSZ. No Dire Wolf code is included.</li>
+    <li>FlexRadio for the SmartSDR API and DAX IQ. FlexRadio, SmartSDR and DAX are trademarks of FlexRadio Systems; SliceAPRS is not a FlexRadio product. Radio code is shared with <a href="https://va3mw.github.io/FlexWSPR/">FlexWSPR</a>.</li>
+    <li>Written by Michael, VA3MW, and Claude (Anthropic).</li>
+    <li><a href="https://wails.io/">Wails</a> (MIT), <a href="https://leafletjs.com/">Leaflet</a> (BSD-2) and <a href="https://github.com/go-yaml/yaml">go-yaml</a> (MIT and Apache 2.0). Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.</li>
+  </ul>
+  <p>SliceAPRS is released under the <a href="https://github.com/va3mw/SliceAPRS/blob/main/LICENSE">MIT License</a>. Copyright © 2026 Michael, VA3MW.</p>
+</section>
+
+<footer>
+  SliceAPRS by Michael, VA3MW, and Claude (Anthropic) · MIT License · source, issues and the full README on <a href="https://github.com/va3mw/SliceAPRS">GitHub</a>.
+</footer>
+</main>
+</body>
+</html>
