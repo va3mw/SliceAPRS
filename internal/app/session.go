@@ -194,7 +194,7 @@ func (a *radioRun) session(ctx context.Context) error {
 		a.log.Info("removed panadapter and stream", "pan", pan)
 	}()
 	if _, err := must(fmt.Sprintf("display pan set %s center=%.6f", pan, float64(freq)/1e6)); err != nil {
-		return fmt.Errorf("the radio would not tune the panadapter to %.3f MHz (a FLEX-6600 needs a 2 m transverter set up in its XVTR settings): %w",
+		return fmt.Errorf("the radio would not tune the panadapter to %.3f MHz (set up a 2 m transverter in the radio's XVTR settings): %w",
 			float64(freq)/1e6, err)
 	}
 	if _, err := must(fmt.Sprintf("display pan set %s daxiq_channel=%d", pan, a.cfg.DAXIQ.Channel)); err != nil {

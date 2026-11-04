@@ -79,7 +79,7 @@ footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--lin
 <header class="hero">
   <div class="wrap">
     <h1>SliceAPRS</h1>
-    <p class="lead">Spot 2 m openings with APRS. SliceAPRS listens to APRS through your FlexRadio, works out which stations you really heard directly, learns your normal range, and tells you when the band opens.</p>
+    <p class="lead">Spot 2 m openings with APRS. SliceAPRS listens to APRS through a FlexRadio capable of receiving your local APRS frequency, usually with the use of a transverter, or a FLEX-6700 (not tested), works out which stations you really heard directly, learns your normal range, and tells you when the band opens.</p>
     <div class="btns">
       <a class="btn go" href="https://github.com/va3mw/SliceAPRS/releases/latest/download/sliceaprs-gui-windows-amd64.exe">Download for Windows</a>
       <a class="btn ghost" href="#download">Raspberry Pi and Linux</a>
@@ -87,7 +87,7 @@ footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--lin
     </div>
     <p class="small"><b style="color:var(--aub-ink)">Receive only:</b> SliceAPRS never keys the radio, and it is not an iGate. Nothing is sent to APRS-IS.</p>
     <p class="small"><b style="color:var(--aub-ink)">No SmartSDR needed:</b> SliceAPRS talks to the radio directly, so SmartSDR and DAX don't have to be running.</p>
-    <p class="small">Free and open source (MIT). Windows 10/11, Debian, Raspberry Pi OS. Needs a FLEX-6000 series radio that receives 2 m: a FLEX-6700, or another model with a 2 m transverter.</p>
+    <p class="small">Free and open source under the MIT License. Not a FlexRadio product. Windows 10/11, Debian, Raspberry Pi OS, with supported radios.</p>
   </div>
 </header>
 
@@ -167,7 +167,7 @@ footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--lin
 <section id="windows">
   <h2>Getting started on Windows</h2>
   <ol class="steps">
-    <li>Set up the radio for 2 m. A FLEX-6700 covers it. A FLEX-6600, 6400 or other model needs a 2 m transverter in the radio's XVTR settings.</li>
+    <li>Set up the radio for your APRS frequency. On most supported radios that means a 2 m transverter in the radio's XVTR settings.</li>
     <li>Run <code>sliceaprs-gui-windows-amd64.exe</code>. On first start it opens on <b>Settings</b>.</li>
     <li>Enter your callsign and grid. Click <b>Find radios</b> and pick yours, or type its IP address.</li>
     <li>Check the frequency (144.390 MHz in North America, 144.800 MHz in Europe). Leave <b>Receive antenna</b> on the radio's choice to use the transverter port (XVTA), or pick one.</li>
@@ -192,7 +192,7 @@ sliceaprs</code></pre>
 <section id="faq">
   <h2>Questions</h2>
   <h3>Which radios does it work with?</h3>
-  <p>FLEX-6000 series radios that can receive 2 m. It has been run on a FLEX-6600M with a 2 m transverter on XVTA, firmware v4.4.0. SliceAPRS connects as a GUI client, so on radios with few client connections SmartSDR may not be able to connect at the same time.</p>
+  <p>Supported radios are those that can receive your local APRS frequency, usually through a 2 m transverter. It has been tested with a 2 m transverter on XVTA, firmware v4.4.0. SliceAPRS connects as a GUI client, so on radios with few client connections SmartSDR may not be able to connect at the same time.</p>
   <h3>Can it run next to FlexWSPR or SmartSDR?</h3>
   <p>Yes, as long as each uses its own DAX IQ channel. SliceAPRS uses channel 2 by default and refuses to start on a channel another program is using.</p>
   <h3>Is it an iGate or a digipeater?</h3>
