@@ -27,7 +27,7 @@ import (
 	"github.com/va3mw/SliceAPRS/internal/web"
 )
 
-var version = "0.1.0" // set by the build scripts
+var version = "0.1.1" // set by the build scripts
 
 func main() {
 	cfgPath := flag.String("config", "", "configuration file (default: "+config.DefaultConfigPath()+
