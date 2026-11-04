@@ -20,6 +20,7 @@ type Pan struct {
 	DAXIQ        int
 	RxAnt        string
 	AntList      []string // antennas this panadapter can use
+	Xvtr         string   // transverter the panadapter is on, "" if none
 }
 
 // Radio is one TCP connection to the SmartSDR API (port 4992).
@@ -127,6 +128,19 @@ func (r *Radio) Antennas() []string {
 }
 
 // Pans returns the panadapters owned by our client handle.
+// PanByID returns the panadapter with this ID, if the radio has sent its
+// status.
+func (r *Radio) PanByID(id uint32) (Pan, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, p := range r.pans {
+		if p.ID == id {
+			return *p, true
+		}
+	}
+	return Pan{}, false
+}
+
 func (r *Radio) OurPans() []Pan {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -265,6 +279,8 @@ func (r *Radio) handleStatus(body string) {
 			p.DAXIQ, _ = strconv.Atoi(v)
 		case "rxant":
 			p.RxAnt = v
+		case "xvtr":
+			p.Xvtr = v
 		case "ant_list":
 			p.AntList = nil
 			for _, a := range strings.Split(v, ",") {

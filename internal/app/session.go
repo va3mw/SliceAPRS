@@ -197,21 +197,29 @@ func (a *radioRun) session(ctx context.Context) error {
 		return fmt.Errorf("the radio would not tune the panadapter to %.3f MHz (a FLEX-6600 needs a 2 m transverter set up in its XVTR settings): %w",
 			float64(freq)/1e6, err)
 	}
-	if ant := a.cfg.RxAnt; ant != "" {
-		must(fmt.Sprintf("display pan set %s rxant=%s", pan, ant))
-	}
 	if _, err := must(fmt.Sprintf("display pan set %s daxiq_channel=%d", pan, a.cfg.DAXIQ.Channel)); err != nil {
 		return err
+	}
+	// Let the panadapter's status for the new centre arrive.
+	time.Sleep(time.Second)
+	rxant := a.cfg.RxAnt
+	if rxant == "" {
+		rxant = transverterAnt(r, panID)
+		if rxant != "" {
+			a.log.Info("using the transverter antenna", "rxant", rxant)
+		}
+	}
+	if rxant != "" {
+		must(fmt.Sprintf("display pan set %s rxant=%s", pan, rxant))
 	}
 	// The radio sets the receiver's band filters from the slices on a
 	// panadapter, and gives a new one a slice on its last band (a 14.100
 	// USB slice left the 2 m transverter IF behind the 20 m filter on a
 	// FLEX-6600M). Put our slice on the APRS channel in FM.
-	time.Sleep(time.Second)
 	sl := r.SlicesOn(panID)
 	ant := ""
-	if a.cfg.RxAnt != "" {
-		ant = " rxant=" + a.cfg.RxAnt
+	if rxant != "" {
+		ant = " rxant=" + rxant
 	}
 	if len(sl) == 0 {
 		if _, err := must(fmt.Sprintf("slice create pan=%s freq=%.6f mode=FM%s", pan, float64(freq)/1e6, ant)); err != nil {
@@ -238,7 +246,7 @@ func (a *radioRun) session(ctx context.Context) error {
 	stream = fmt.Sprintf("0x%08X", sid)
 	sidA.Store(sid)
 	must(fmt.Sprintf("stream set %s daxiq_rate=%d", stream, config.IQRate))
-	a.log.Info("receiving", "MHz", float64(freq)/1e6, "rxant", a.cfg.RxAnt, "daxiq", a.cfg.DAXIQ.Channel, "pan", pan, "stream", stream)
+	a.log.Info("receiving", "MHz", float64(freq)/1e6, "rxant", rxant, "daxiq", a.cfg.DAXIQ.Channel, "pan", pan, "stream", stream)
 	a.mon.set(func(s *Status) { s.FreqHz = freq })
 	a.mon.state(StateRunning, "")
 
@@ -345,4 +353,36 @@ func openUDP() (*net.UDPConn, int, error) {
 		lastErr = err
 	}
 	return nil, 0, fmt.Errorf("no free UDP port for the DAX IQ stream: %w", lastErr)
+}
+
+// transverterAnt picks the receive antenna when none is set: the radio
+// keeps a panadapter on its HF antenna when it is tuned into a transverter
+// band (a FLEX-6600M stayed on ANT1 at 144.390 and heard only a nearby
+// tracker), so use the transverter port. "" leaves the radio's choice.
+func transverterAnt(r *flex.Radio, panID uint32) string {
+	p, ok := r.PanByID(panID)
+	if !ok || p.Xvtr == "" {
+		return ""
+	}
+	if strings.HasPrefix(p.RxAnt, "XVT") {
+		return p.RxAnt
+	}
+	ants := p.AntList
+	if len(ants) == 0 {
+		ants = r.Antennas()
+	}
+	for _, a := range ants {
+		if a == "XVTA" {
+			return a
+		}
+	}
+	for _, a := range ants {
+		if strings.HasPrefix(a, "XVT") {
+			return a
+		}
+	}
+	if len(ants) == 0 {
+		return "XVTA"
+	}
+	return ""
 }
