@@ -1,0 +1,5 @@
+/sliceaprs
+/sliceaprs-*
+*.exe
+*.wav
+/dist/

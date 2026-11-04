@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SliceAPRS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">SliceAPRS</span>
+    <span id="station" class="muted"></span>
+  </div>
+  <div class="now">
+    <div class="pill" id="state">…</div>
+    <div class="freqnow"><b id="freq">–</b> <span id="rxinfo" class="muted mono"></span></div>
+    <div class="clock"><span class="mono" id="utc">--:--:--</span> <span class="muted">UTC</span></div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="openings" class="on">Openings</button>
+  <button role="tab" data-tab="stations">Stations</button>
+  <button role="tab" data-tab="grids">Grids</button>
+  <button role="tab" data-tab="packets">Packets</button>
+  <button role="tab" data-tab="settings">Settings</button>
+  <button role="tab" data-tab="log">Log</button>
+  <button role="tab" data-tab="help">Help</button>
+</nav>
+
+<main>
+  <div id="banner" class="banner" hidden></div>
+  <div id="alert" class="alert" hidden>
+    <div class="alert-main"><b id="alertTitle"></b> <span id="alertText"></span></div>
+    <button class="ghost" id="alertHide" title="Hide until the level changes">Hide</button>
+  </div>
+
+  <!-- Openings -->
+  <section id="tab-openings" class="tab on">
+    <div class="cards">
+      <div class="card lvcard" id="lvCard"><div class="k">2 m now</div><div class="v"><span class="lv-badge" id="level">–</span></div><div class="s" id="levelText"></div></div>
+      <div class="card"><div class="k">Farthest direct, 15 min</div><div class="v" id="far15">–</div><div class="s" id="far15s"></div></div>
+      <div class="card"><div class="k">Farthest direct, 60 min</div><div class="v" id="far60">–</div><div class="s" id="far60s"></div></div>
+      <div class="card"><div class="k">Normal this hour</div><div class="v" id="normal">learning</div><div class="s" id="normals"></div></div>
+    </div>
+
+    <div class="split2">
+      <div class="panel" id="mapPanel">
+        <h2>Direct paths, last hour <span class="muted small" id="mapNote"></span></h2>
+        <div id="map"></div>
+        <div class="legend small muted" id="kmLegend"></div>
+      </div>
+      <div class="panel">
+        <h2>Bearing and distance, last hour <span class="muted small" id="polarNote"></span></h2>
+        <div id="polar"></div>
+        <p class="muted small">Each dot is a station heard directly, at its bearing (north up) and distance from you. The dashed ring is your normal range for this hour; the newest dots are ringed.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Last 24 hours <span class="muted small">farthest direct station each UTC hour, against your normal</span></h2>
+      <div class="heat" id="heat"></div>
+      <div class="legend small muted">
+        <span><i class="sw r0"></i>at or under normal</span><span><i class="sw r1"></i>up to 1.3×</span>
+        <span><i class="sw r2"></i>1.3–2×</span><span><i class="sw r3"></i>over 2× normal</span><span><i class="sw none"></i>nothing decoded</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Openings <span class="muted small" id="openNote"></span></h2>
+      <div class="scroll"><table class="t" id="openings">
+        <thead><tr><th>Start (UTC)</th><th>End</th><th class="r">Length</th><th>Peak</th><th>Strength</th><th>Direction</th><th>Farthest</th><th class="r">Stations</th><th>Far stations</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty muted" id="noOpenings">No openings logged yet.</p>
+    </div>
+  </section>
+
+  <!-- Stations -->
+  <section id="tab-stations" class="tab">
+    <div class="panel">
+      <h2>Stations <span class="muted small" id="stNote"></span>
+        <span class="inline row"><label class="check"><input type="checkbox" id="stDirect"> Heard directly only</label>
+        <input id="stFind" placeholder="Find callsign" spellcheck="false"></span></h2>
+      <div class="scroll"><table class="t" id="stations">
+        <thead><tr><th>Callsign</th><th>Last position</th><th class="r">km</th><th class="r">Bearing</th><th>Heard</th><th>Last heard</th><th class="r">Packets</th><th class="r">Direct</th><th class="r">Best direct</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- Grids -->
+  <section id="tab-grids" class="tab">
+    <div class="panel">
+      <h2>Grid squares heard directly <span class="muted small" id="grNote"></span>
+        <span class="inline row"><label>Heard in <select id="grPeriod"><option value="24">last 24 hours</option><option value="168">last 7 days</option><option value="0" selected>all time</option></select></label></span></h2>
+      <div id="gridMap"></div>
+      <div class="legend small muted" id="grLegend"></div>
+      <p class="muted small">Each square is a 4-character Maidenhead grid where a station was heard directly (its own signal, or a digipeater repeating). Shaded by the farthest direct station heard there. Relayed senders don't count. Your grid is outlined.</p>
+    </div>
+    <div class="panel">
+      <div class="scroll"><table class="t" id="grids">
+        <thead><tr><th>Grid</th><th class="r">Farthest</th><th class="r">Bearing</th><th>Best station</th><th class="r">Stations</th><th class="r">Paths</th><th>First heard (UTC)</th><th>Last heard</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty muted" id="noGrids">No grids heard directly yet.</p>
+    </div>
+  </section>
+
+  <!-- Packets -->
+  <section id="tab-packets" class="tab">
+    <div class="panel">
+      <h2>Packets <span class="muted small" id="pkNote"></span>
+        <span class="inline row"><label class="check"><input type="checkbox" id="pkPause"> Pause</label>
+        <label class="check"><input type="checkbox" id="pkRaw" checked> Raw</label></span></h2>
+      <div class="scroll tall"><table class="t" id="packets">
+        <thead><tr><th>UTC</th><th>Heard directly</th><th class="r">km</th><th class="r">SNR</th><th>From</th><th>Decoded</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="muted small">The station marked <span class="kind direct">direct</span> is the one whose signal reached your antenna: the sender, or the last digipeater that repeated the packet. Only those with a known position count towards openings.</p>
+    </div>
+  </section>
+
+  <!-- Settings -->
+  <section id="tab-settings" class="tab">
+    <form id="settings" class="grid" autocomplete="off">
+      <fieldset>
+        <legend>Station</legend>
+        <label>Callsign <input name="callsign" required maxlength="9" spellcheck="false"></label>
+        <label>Grid <input name="grid" required maxlength="8" placeholder="FN25 or FN25dk" spellcheck="false"></label>
+        <p class="muted small">Distances are measured from the centre of the grid square; a 6-character grid is within about 3 km. Packets from your callsign, any SSID, never count.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Radio</legend>
+        <label>IP address <input name="radio.ip" placeholder="blank: find it on the LAN" spellcheck="false"></label>
+        <div class="row"><button type="button" class="ghost" id="findRadios">Find radios</button><span class="muted small" id="findNote"></span></div>
+        <div id="radios" class="radios"></div>
+        <label>Frequency
+          <select id="freqSel"><option value="144.39">144.390 MHz (North America)</option><option value="144.8">144.800 MHz (Europe)</option><option value="145.175">145.175 MHz (Australia)</option><option value="other">Other…</option></select></label>
+        <label id="freqOther" hidden>Frequency (MHz) <input type="number" name="frequency_mhz" step="0.001" min="30" max="1300"></label>
+        <label>Receive antenna <select name="rxant"></select></label>
+        <p class="muted small" id="antNote"></p>
+      </fieldset>
+      <fieldset>
+        <legend>DAX IQ</legend>
+        <label>Channel <select name="daxiq.channel"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+        <p class="muted small">SliceAPRS will not start on a channel another program is using. FlexWSPR normally uses channel 1.</p>
+        <label class="check"><input type="checkbox" name="daxiq.swap_iq"> Swap I and Q</label>
+      </fieldset>
+      <fieldset>
+        <legend>Openings</legend>
+        <label>Any direct path over (km) <input type="number" name="openings.distance_km" min="50" max="5000" step="10"></label>
+        <label>Sensitivity <select name="openings.sensitivity"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label>
+        <p class="muted small" id="sensNote"></p>
+      </fieldset>
+      <fieldset>
+        <legend>Web page and files</legend>
+        <p class="muted small" id="localNote" hidden>These can only be changed in the config file or the desktop app.</p>
+        <label>Web page port <input id="webPort" class="sys" type="number" min="1" max="65535" placeholder="blank: no web page"></label>
+        <label class="check"><input type="checkbox" id="webLan" class="sys"> Reachable from other computers</label>
+        <p class="muted small" id="webNote"></p>
+        <label>Data folder <input name="data_dir" class="sys" spellcheck="false"></label>
+        <label class="check"><input type="checkbox" name="debug"> Debug logging</label>
+        <p class="muted small mono" id="cfgPath"></p>
+      </fieldset>
+    </form>
+    <div class="savebar"><span class="err" id="setErr"></span><button class="primary" id="saveSet">Save and restart</button></div>
+  </section>
+
+  <!-- Log -->
+  <section id="tab-log" class="tab">
+    <div class="panel">
+      <div class="row"><label class="check"><input type="checkbox" id="follow" checked> Follow</label>
+        <span class="muted small" id="decStats"></span></div>
+      <pre id="log" class="log"></pre>
+    </div>
+  </section>
+
+  <!-- Help -->
+  <section id="tab-help" class="tab help">
+    <div class="panel">
+      <h2>SliceAPRS <span class="muted small" id="helpVersion"></span></h2>
+      <p>SliceAPRS listens to APRS on 2 m through a FlexRadio and uses the packets to spot 2 m path openings (tropo and other enhancements) for 2 m DX. APRS stations beacon their positions all the time, so they make a dense network of 2 m beacons: when the band opens, you start to hear stations directly from much farther away than usual.
+        Source and releases: <a href="https://github.com/va3mw/SliceAPRS" target="_blank" rel="noopener">github.com/va3mw/SliceAPRS</a></p>
+      <p class="muted">Receive only: SliceAPRS never transmits. SmartSDR and DAX do not need to be running.</p>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Getting started</h2>
+        <ol>
+          <li>Set up the radio for 2 m: a FLEX-6700 covers it; a FLEX-6600 or other model needs a 2 m transverter in the radio's XVTR settings.</li>
+          <li>In <b>Settings</b>, enter your callsign and grid. Click <b>Find radios</b> and pick yours, or type its IP address.</li>
+          <li>Check the frequency (144.390 MHz in North America, 144.800 MHz in Europe), the receive antenna, and a DAX IQ channel nobody else uses.</li>
+          <li>Press <b>Save and restart</b>. SliceAPRS opens its own panadapter and DAX IQ stream; packets appear in <b>Packets</b>.</li>
+          <li>Leave <b>Openings</b> up on the desktop. Your normal range needs a day or two of listening to learn.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h2>Who was heard directly</h2>
+        <p>Each packet carries its digipeater path, and each digipeater that repeats it sets a "has-been-repeated" bit. The signal that reached your antenna came from the <b>last digipeater with that bit set</b>, or from the <b>sender</b> if no digipeater has repeated it yet.</p>
+        <ul>
+          <li>A relayed packet is measured to the digipeater, never to the original sender. Digipeater positions are learned from their own beacons.</li>
+          <li>Not counted: packets from the internet (third-party, TCPIP), satellite and ISS paths (and the 145.825 MHz channel), packets repeated by a digipeater that did not add its call, and your own callsign.</li>
+          <li>Positions: objects and items do not move their sender. A position that jumps too far, too fast is held until a second report agrees; the Packets tab shows both the station's last position and the one in the packet.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>How openings are detected</h2>
+        <p><b>Normal range</b>, for each UTC hour of the day: the 90th percentile of each station's farthest direct distance per hour over the last 14 days (the hour either side counts too). Until each hour has enough history, all hours together are used; with almost no history, only the distance rule works. Stations heard directly on 3 or more days are your <b>usual</b> stations.</p>
+        <p>In the last 30 minutes, a <b>far</b> station is one heard directly beyond normal × the sensitivity factor, and not one of your usual stations.</p>
+        <ul>
+          <li><b>Enhanced</b>: at least the sensitivity's number of far stations (1 at medium).</li>
+          <li><b>Open</b>: more far stations (3 at medium), or any direct path over the set distance (300 km to start).</li>
+        </ul>
+        <p class="muted">An opening starts with its first far packet and ends at the last one, once 30 minutes pass with none. Its direction is the average bearing of the far stations; its strength rates how many there were and how far beyond normal.</p>
+        <dl id="rulesTable"></dl>
+      </div>
+      <div class="panel">
+        <h2>The tabs</h2>
+        <dl>
+          <dt>Openings</dt><dd>Status now, the farthest direct stations, a map and polar plot of the direct paths, the last 24 hours against normal, and the log of openings.</dd>
+          <dt>Stations</dt><dd>Every station heard, with its last position, distance, bearing and whether it was heard directly.</dd>
+          <dt>Grids</dt><dd>Every 4-character grid square heard directly, on a grid map and in a table, for the last day, week or all time.</dd>
+          <dt>Packets</dt><dd>Every packet, raw and decoded, with the station heard directly marked.</dd>
+          <dt>Settings</dt><dd>Station, radio, frequency, antenna, DAX IQ channel, opening rules, web page and data folder.</dd>
+          <dt>Log</dt><dd>What SliceAPRS is doing, and the decoder counts.</dd>
+        </dl>
+        <p class="muted">The map needs internet for its tiles; without it only the plots are shown. History (packets, paths, openings, stations) is kept in the data folder and is never deleted by SliceAPRS.</p>
+      </div>
+      <div class="panel">
+        <h2>Credits</h2>
+        <ul>
+          <li>Written by Michael, VA3MW, and Claude (Anthropic).</li>
+          <li><b>APRS</b>: Bob Bruninga, WB4APR (SK), and the APRS protocol reference. <b>AX.25</b>: the ARRL/TAPR link-layer protocol.</li>
+          <li>The demodulator follows the approach of <a href="https://github.com/wb2osz/direwolf" target="_blank" rel="noopener">Dire Wolf</a> by John Langner, WB2OSZ (correlators with tone normalising, several slicers, a digital PLL); no Dire Wolf code is included.</li>
+          <li><b>FlexRadio</b>: the SmartSDR API and DAX IQ (VITA-49). FlexRadio, SmartSDR and DAX are trademarks of FlexRadio Systems; SliceAPRS is not a FlexRadio product. Radio code shared with FlexWSPR.</li>
+          <li><b>Libraries:</b> <a href="https://wails.io/" target="_blank" rel="noopener">Wails</a> (MIT), <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a> (BSD-2), <a href="https://github.com/go-yaml/yaml" target="_blank" rel="noopener">go-yaml</a> (MIT and Apache 2.0), the <a href="https://go.dev/" target="_blank" rel="noopener">Go</a> standard library (BSD). Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>License</h2>
+      <pre class="license">MIT License
+
+Copyright (c) 2026 Michael, VA3MW
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+    </div>
+  </section>
+</main>
+<div id="tip" class="tip" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
