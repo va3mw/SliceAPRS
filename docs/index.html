@@ -113,6 +113,7 @@ footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--lin
     <div class="card"><h3>Who you really heard</h3><p>A packet relayed by a local digipeater counts as the digipeater, not the far station that sent it.</p></div>
     <div class="card"><h3>Your normal range</h3><p>Learns how far you usually hear, hour by hour, over the last 14 days.</p></div>
     <div class="card"><h3>Openings</h3><p>Flags Enhanced and Open conditions with direction, strength, start and end, and keeps a log.</p></div>
+    <div class="card"><h3>Alerts</h3><p>A banner on screen, and if you want, a spoken alert and a Pushover message to your phone when 2 m opens.</p></div>
     <div class="card"><h3>Grid squares</h3><p>Keeps every 4-character grid square heard directly, on a grid map and in a table.</p></div>
     <div class="card"><h3>Desktop or headless</h3><p>A Windows desktop app, or a headless program for a Raspberry Pi that you set up from any web browser.</p></div>
     <div class="card"><h3>Watch from anywhere</h3><p>The same screens are served as a web page, so you can check from a phone or another PC.</p></div>
@@ -133,6 +134,14 @@ footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--lin
     <tr><td><span class="lv" style="background:#2eb67d"></span>Open</td><td>3 or more far stations, or any direct path over the set distance (300 km to start)</td></tr>
   </table></div>
   <p>Sensitivity changes the factor and the counts: low is 1.5× normal and needs 2 far stations for Enhanced and 4 for Open; medium is 1.3×, 1 and 3; high is 1.15×, 1 and 2. Your normal range needs a day or two of listening. Until then only the distance rule works.</p>
+  <h3>Alerts</h3>
+  <p>The Openings tab shows a banner when the band opens. Under <b>Settings → Alerts</b> you can also have SliceAPRS speak the alert on the computer it runs on, and send it to your phone with <a href="https://pushover.net/">Pushover</a>. Choose whether to be alerted at Enhanced or only at Open.</p>
+  <ul>
+    <li><b>Spoken alerts</b> use the Windows voice, or espeak-ng on Linux (<code>sudo apt install espeak-ng</code>). For example: “Two metres is open toward the south west. Farthest station W 2 T R 2, at 340 kilometres.”</li>
+    <li><b>Pushover</b> needs a Pushover account and the app on your phone. Enter your <b>user key</b> from your Pushover dashboard, and an <b>API token</b> from an application you create at <a href="https://pushover.net/apps/build">pushover.net/apps/build</a>. The keys are kept in the settings file and never shown on the page again.</li>
+    <li>Use <b>Test voice</b> and <b>Test Pushover</b> to check both.</li>
+    <li>The same level is not alerted again within 30 minutes. Going from Enhanced to Open alerts again. Restarting SliceAPRS during an opening does not.</li>
+  </ul>
   <figure>
     <img src="stations.png" alt="Stations tab: every station heard with its position, distance, bearing and how it was heard" loading="lazy">
     <figcaption><b>Stations.</b> Every station heard, with its last position, distance and bearing, whether you ever heard it directly, the route of its last packet, and its best direct distance. Screen from version 0.1.0, before the Heard directly column was split into own packets and relays.</figcaption>
@@ -196,7 +205,7 @@ sudo mkdir -p /etc/sliceaprs /var/lib/sliceaprs
 sudo chown $USER /etc/sliceaprs /var/lib/sliceaprs
 sliceaprs</code></pre>
   <p>Then browse to <code>http://&lt;pi-name&gt;:8081</code> from any computer and set it up there, just as on Windows. Settings go to <code>/etc/sliceaprs/sliceaprs.yaml</code> and history to <code>/var/lib/sliceaprs</code>. On 32-bit Raspberry Pi OS, use <code>sliceaprs-linux-arm</code> instead. No systemd service file is included yet.</p>
-  <p class="note">The web page has no password. Keep port 8081 on your own network. Over the network, the page can change station, radio, frequency, antenna and opening settings, but not the data folder or the web address.</p>
+  <p class="note">The web page has no password. Keep port 8081 on your own network. Over the network, the page can change station, radio, frequency, antenna, opening and alert settings, but not the data folder or the web address.</p>
 </section>
 
 <section id="faq">
@@ -210,7 +219,7 @@ sliceaprs</code></pre>
   <h3>Why do far stations not count as an opening?</h3>
   <p>Most far stations reach you through a digipeater. SliceAPRS only counts the station whose signal actually reached your antenna, so a local digipeater relaying a far station is a local path.</p>
   <h3>What is sent over the internet?</h3>
-  <p>Only map tiles, fetched from OpenStreetMap when you look at the map and kept in the data folder for a week. Without internet the map is replaced by the plots.</p>
+  <p>Map tiles, fetched from OpenStreetMap when you look at the map and kept in the data folder for a week. Without internet the map is replaced by the plots. If you turn on Pushover alerts, each alert is also sent to Pushover. Nothing else.</p>
 </section>
 
 <section id="credits">
