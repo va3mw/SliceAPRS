@@ -135,7 +135,7 @@ footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--lin
   <p>Sensitivity changes the factor and the counts: low is 1.5× normal and needs 2 far stations for Enhanced and 4 for Open; medium is 1.3×, 1 and 3; high is 1.15×, 1 and 2. Your normal range needs a day or two of listening. Until then only the distance rule works.</p>
   <figure>
     <img src="stations.png" alt="Stations tab: every station heard with its position, distance, bearing and how it was heard" loading="lazy">
-    <figcaption><b>Stations.</b> Every station heard, with its last position, distance and bearing, whether it was heard directly or through a digipeater, and its best direct distance.</figcaption>
+    <figcaption><b>Stations.</b> Every station heard, with its last position, distance and bearing, whether you ever heard it directly, the route of its last packet, and its best direct distance. Screen from version 0.1.0, before the Heard directly column was split into own packets and relays.</figcaption>
   </figure>
 </section>
 
@@ -147,6 +147,16 @@ footer { margin-top: 48px; padding: 24px 0 40px; border-top: 1px solid var(--lin
     <li>Not counted: packets from the internet (third-party, TCPIP), satellite and ISS paths, packets repeated by a digipeater that did not add its call, and your own callsign.</li>
     <li>A position that jumps too far, too fast is held until a second report agrees.</li>
   </ul>
+  <h3>How the screens show it</h3>
+  <p>A station can be heard directly in two ways: when you hear <b>its own packet</b> before any digipeater has repeated it, and when it is a digipeater and you hear it <b>relaying</b> another station's packet. Either way, its signal reached your antenna.</p>
+  <div class="scroll"><table>
+    <tr><th>Where</th><th>What it shows</th><th>Example</th></tr>
+    <tr><td>Stations · <b>Heard directly</b></td><td>Whether you have ever heard this station's own signal, and how often: its own packets and packets it relayed for others</td><td>yes · 5 own · 75 relays</td></tr>
+    <tr><td>Stations · <b>Its last packet</b></td><td>How this station's most recent packet reached you: direct, through a digipeater, from the internet or by satellite</td><td>via VA3XUU-1</td></tr>
+    <tr><td>Stations · <b>Sent</b></td><td>All packets from this station, however they reached you</td><td>42</td></tr>
+    <tr><td>Packets · <b>Signal heard from</b></td><td>The station whose signal you heard for this packet, and whether it was that station's own packet or a relay</td><td>VE3DIG-1 · relaying W2RLY</td></tr>
+  </table></div>
+  <p>So a station can show <i>yes</i> under Heard directly while its last packet came through a digipeater. Hearings stored before version 0.1.2 were not split, and show as <i>earlier</i>.</p>
 </section>
 
 <section id="download">
