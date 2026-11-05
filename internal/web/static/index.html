@@ -84,9 +84,10 @@
         <span class="inline row"><label class="check"><input type="checkbox" id="stDirect"> Heard directly only</label>
         <input id="stFind" placeholder="Find callsign" spellcheck="false"></span></h2>
       <div class="scroll"><table class="t" id="stations">
-        <thead><tr><th>Callsign</th><th>Last position</th><th class="r">km</th><th class="r">Bearing</th><th>Heard</th><th>Last heard</th><th class="r">Packets</th><th class="r">Direct</th><th class="r">Best direct</th><th></th></tr></thead>
+        <thead><tr><th>Callsign</th><th>Last position</th><th class="r">km</th><th class="r">Bearing</th><th>Heard directly</th><th>Its last packet</th><th>Last heard</th><th class="r">Best direct</th><th class="r">Sent</th><th></th></tr></thead>
         <tbody></tbody>
       </table></div>
+      <p class="muted small"><b>Heard directly</b> counts the times this station's own signal reached your antenna: <b>own</b> is its own packets heard before any digipeater repeated them; <b>relays</b> is other stations' packets it repeated as a digipeater. <b>Its last packet</b> is how the latest packet it sent reached you, which can be through a digipeater even when you also hear the station itself. <b>Sent</b> is every packet it sent that you received, by any route.</p>
     </div>
   </section>
 
@@ -115,10 +116,10 @@
         <span class="inline row"><label class="check"><input type="checkbox" id="pkPause"> Pause</label>
         <label class="check"><input type="checkbox" id="pkRaw" checked> Raw</label></span></h2>
       <div class="scroll tall"><table class="t" id="packets">
-        <thead><tr><th>UTC</th><th>Heard directly</th><th class="r">km</th><th class="r">SNR</th><th>From</th><th>Decoded</th></tr></thead>
+        <thead><tr><th>UTC</th><th>Signal heard from</th><th class="r">km</th><th class="r">SNR</th><th>From</th><th>Decoded</th></tr></thead>
         <tbody></tbody>
       </table></div>
-      <p class="muted small">The station marked <span class="kind direct">direct</span> is the one whose signal reached your antenna: the sender, or the last digipeater that repeated the packet. Only those with a known position count towards openings.</p>
+      <p class="muted small"><b>Signal heard from</b> is the station whose signal reached your antenna: the sender (<span class="kind direct">its own packet</span>), or the last digipeater that repeated it (<span class="kind digi">relaying</span> the sender). The distance is to that station, and only those with a known position count towards openings. <b>From</b> is who sent the packet.</p>
     </div>
   </section>
 
@@ -221,7 +222,7 @@
         <h2>The tabs</h2>
         <dl>
           <dt>Openings</dt><dd>Status now, the farthest direct stations, a map and polar plot of the direct paths, the last 24 hours against normal, and the log of openings.</dd>
-          <dt>Stations</dt><dd>Every station heard, with its last position, distance, bearing and whether it was heard directly.</dd>
+          <dt>Stations</dt><dd>Every station heard, with its last position, distance and bearing, how many times its own signal was heard directly (its own packets and the packets it relayed), and how its latest packet arrived.</dd>
           <dt>Grids</dt><dd>Every 4-character grid square heard directly, on a grid map and in a table, for the last day, week or all time.</dd>
           <dt>Packets</dt><dd>Every packet, raw and decoded, with the station heard directly marked.</dd>
           <dt>Settings</dt><dd>Station, radio, frequency, antenna, DAX IQ channel, opening rules, web page and data folder.</dd>

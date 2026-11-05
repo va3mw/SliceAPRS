@@ -92,13 +92,18 @@ type Station struct {
 	Packets    int       `json:"packets"` // packets it sent, by any route
 	// Direct counts the times its own signal was heard: its packets heard
 	// direct, plus the packets it repeated as a digipeater.
-	Direct     int       `json:"direct"`
-	LastDirect time.Time `json:"last_direct,omitempty"`
-	LastVia    string    `json:"last_via"` // "" direct, else the digipeater, or a Kind
-	BestKm     float64   `json:"best_km,omitempty"`
-	BestTime   time.Time `json:"best_time,omitempty"`
-	Digi       bool      `json:"digi,omitempty"` // has repeated packets here
-	Usual      bool      `json:"usual,omitempty"`
+	Direct int `json:"direct"`
+	// DirectOwn and DirectRelay split Direct: its own packets heard before
+	// any digipeater, and other stations' packets it repeated. Counts from
+	// before they were kept are in neither.
+	DirectOwn   int       `json:"direct_own"`
+	DirectRelay int       `json:"direct_relay"`
+	LastDirect  time.Time `json:"last_direct,omitempty"`
+	LastVia     string    `json:"last_via"` // "" direct, else the digipeater, or a Kind
+	BestKm      float64   `json:"best_km,omitempty"`
+	BestTime    time.Time `json:"best_time,omitempty"`
+	Digi        bool      `json:"digi,omitempty"` // has repeated packets here
+	Usual       bool      `json:"usual,omitempty"`
 }
 
 // fixed reports whether the station has sat at one spot for a while.
@@ -275,6 +280,11 @@ func (t *Tracker) Packet(now time.Time, f *ax25.Frame, p *aprs.Packet, perr erro
 		via.Digi = true
 	}
 	via.Direct++
+	if via == src {
+		via.DirectOwn++
+	} else {
+		via.DirectRelay++
+	}
 	via.LastDirect = now
 	if via != src {
 		via.LastHeard = now

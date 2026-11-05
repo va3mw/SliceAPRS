@@ -100,6 +100,14 @@ func TestRoutes(t *testing.T) {
 	if math.Abs(h.Km-60) > 0.5 {
 		t.Fatalf("object moved the digi: %+v", h)
 	}
+	// What was heard directly: the digi's own beacon and object, and the
+	// two packets it repeated for VE3FAR, who was never heard itself.
+	if d := tr.stations["VE3DIG-1"]; d.Direct != 4 || d.DirectOwn != 2 || d.DirectRelay != 2 {
+		t.Fatalf("VE3DIG-1 direct %d own %d relay %d", d.Direct, d.DirectOwn, d.DirectRelay)
+	}
+	if f := tr.stations["VE3FAR"]; f.Direct != 0 || f.DirectOwn != 0 || f.DirectRelay != 0 {
+		t.Fatalf("VE3FAR direct %d own %d relay %d", f.Direct, f.DirectOwn, f.DirectRelay)
+	}
 }
 
 func TestPositionJump(t *testing.T) {

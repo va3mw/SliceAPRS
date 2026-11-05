@@ -216,7 +216,7 @@ function drawMap(o, paths) {
     const fresh = age < 5;
     L.polyline([[o.home_lat, o.home_lon], [p.lat, p.lon]], { color: col, weight: fresh ? 4 : 2, opacity: fresh ? 1 : Math.max(0.35, 1 - age / 75) }).addTo(mapLayer);
     L.circleMarker([p.lat, p.lon], { radius: fresh ? 6 : 4, color: "#fff", weight: 2, fillColor: col, fillOpacity: 1 })
-      .bindTooltip(`<b>${esc(p.call)}</b> ${km(p.km)} · ${Math.round(p.brg)}° ${compass(p.brg)}<br>${hhmm(p.t)} UTC${p.src ? " · repeating " + esc(p.src) : ""}${p.hl ? ` · SNR ${p.snr.toFixed(0)} dB` : ""}`)
+      .bindTooltip(`<b>${esc(p.call)}</b> ${km(p.km)} · ${Math.round(p.brg)}° ${compass(p.brg)}<br>${hhmm(p.t)} UTC${p.src ? " · repeating " + esc(p.src) : ""}${p.hl ? ` · SNR ${(p.snr || 0).toFixed(0)} dB` : ""}`)
       .addTo(mapLayer);
     pts.push([p.lat, p.lon]);
   }
@@ -254,7 +254,7 @@ function drawPolar(o, paths) {
   for (const p of paths) {
     const x = c + r(p.km) * Math.sin(p.brg * Math.PI / 180), y = c - r(p.km) * Math.cos(p.brg * Math.PI / 180);
     const fresh = (now - new Date(p.t)) / 60000 < 5;
-    const t = `<b>${esc(p.call)}</b> ${km(p.km)} · ${Math.round(p.brg)}° ${compass(p.brg)}<br>${hhmm(p.t)} UTC${p.hl ? ` · SNR ${p.snr.toFixed(0)} dB` : ""}`;
+    const t = `<b>${esc(p.call)}</b> ${km(p.km)} · ${Math.round(p.brg)}° ${compass(p.brg)}<br>${hhmm(p.t)} UTC${p.hl ? ` · SNR ${(p.snr || 0).toFixed(0)} dB` : ""}`;
     svg += `<circle class="dot" cx="${x}" cy="${y}" r="5" fill="var(--${band(p.km)})"/>`;
     if (fresh) svg += `<circle class="new" cx="${x}" cy="${y}" r="9"/>`;
     svg += `<circle cx="${x}" cy="${y}" r="11" fill="transparent" data-tip="${esc(t)}"/>`;
@@ -305,10 +305,32 @@ async function pollStations() {
   try { stations = await api("/api/stations"); } catch { return; }
   renderStations();
 }
-function heardText(s) {
-  if (s.last_via === "") return `<span class="kind direct">direct</span>`;
-  if (["gateway", "satellite", "own", "via-alias"].includes(s.last_via)) return `<span class="kind">${esc(s.last_via)}</span>`;
-  return `<span class="kind digi">via ${esc(s.last_via)}</span>`;
+// What of this station was heard directly: its own packets before any
+// digipeater, and the packets it relayed as a digipeater.
+function directText(s) {
+  if (!s.direct) return `<span class="muted">no</span>`;
+  const own = s.direct_own || 0, relay = s.direct_relay || 0, older = s.direct - own - relay;
+  const parts = [];
+  if (own) parts.push(`${own} own`);
+  if (relay) parts.push(`${relay} relay${relay === 1 ? "" : "s"}`);
+  if (older > 0) parts.push(`${older} earlier`);
+  const tip = [`${esc(s.call)}'s own signal reached you ${s.direct} time${s.direct === 1 ? "" : "s"}`];
+  if (own) tip.push(`${own}: its own packet${own === 1 ? "" : "s"}, heard before any digipeater`);
+  if (relay) tip.push(`${relay}: other stations' packets it repeated as a digipeater`);
+  if (older > 0) tip.push(`${older}: heard before own and relays were counted apart`);
+  if (s.last_direct) tip.push(`last heard directly ${ago(s.last_direct)}`);
+  return `<span data-tip="${tip.join("<br>")}"><span class="kind direct">yes</span> <span class="small">${parts.join(" · ")}</span></span>`;
+}
+// How the latest packet this station sent reached you.
+function lastPacketText(s) {
+  switch (s.last_via) {
+    case "": return `<span class="kind direct">direct</span>`;
+    case "gateway": return `<span class="kind">internet</span>`;
+    case "satellite": return `<span class="kind">satellite</span>`;
+    case "own": return `<span class="kind">your call</span>`;
+    case "via-alias": return `<span class="kind digi">via unknown digi</span>`;
+    default: return `<span class="kind digi">via ${esc(s.last_via)}</span>`;
+  }
 }
 function renderStations() {
   const q = $("#stFind").value.trim().toUpperCase();
@@ -318,9 +340,9 @@ function renderStations() {
   $("#stations tbody").innerHTML = list.slice(0, 1000).map((s) => `<tr>
     <td class="call">${esc(s.call)}${s.digi ? ' <span class="kind">digi</span>' : ""}${s.usual ? ' <span class="kind usual">usual</span>' : ""}</td>
     <td class="mono small">${s.has_pos ? `${s.lat.toFixed(4)} ${s.lon.toFixed(4)}` : '<span class="muted">unknown</span>'}${s.pending ? ` <span class="kind jump" data-tip="Unconfirmed report ${km(s.pending.km)} away at ${hhmm(s.pending.time)} UTC: waiting for a second report">jump?</span>` : ""}</td>
-    <td class="r">${s.has_pos ? Math.round(s.km) : ""}</td><td class="r">${s.has_pos ? Math.round(s.bearing) + "° " + compass(s.bearing) : ""}</td>
-    <td>${heardText(s)}</td><td data-tip="${esc(ymdhm(s.last_heard))} UTC">${ago(s.last_heard)}</td>
-    <td class="r">${s.packets}</td><td class="r">${s.direct}</td><td class="r">${s.best_km ? Math.round(s.best_km) + " km" : ""}</td>
+    <td class="r">${s.has_pos ? Math.round(s.km || 0) : ""}</td><td class="r">${s.has_pos ? Math.round(s.bearing || 0) + "° " + compass(s.bearing || 0) : ""}</td>
+    <td>${directText(s)}</td><td>${lastPacketText(s)}</td><td data-tip="${esc(ymdhm(s.last_heard))} UTC">${ago(s.last_heard)}</td>
+    <td class="r">${s.best_km ? Math.round(s.best_km) + " km" : ""}</td><td class="r">${s.packets}</td>
     <td class="small muted wrap">${esc(s.comment || "")}</td></tr>`).join("");
 }
 $("#stFind").addEventListener("input", renderStations);
@@ -345,10 +367,10 @@ function renderGrids() {
   const hours = +$("#grPeriod").value;
   const since = hours ? Date.now() - hours * 3600000 : 0;
   const list = gridData.grids.filter((g) => new Date(g.last) >= since);
-  $("#grNote").textContent = `${list.length} grid${list.length === 1 ? "" : "s"}` + (gridData.home ? ` � you are in ${gridData.home.slice(0, 4)}` : "");
+  $("#grNote").textContent = `${list.length} grid${list.length === 1 ? "" : "s"}` + (gridData.home ? ` · you are in ${gridData.home.slice(0, 4)}` : "");
   $("#noGrids").hidden = list.length > 0;
   $("#grids tbody").innerHTML = list.map((g) => `<tr>
-    <td class="call">${esc(g.grid)}</td><td class="r">${km(g.best_km)}</td><td class="r">${Math.round(g.bearing)}� ${compass(g.bearing)}</td>
+    <td class="call">${esc(g.grid)}</td><td class="r">${km(g.best_km)}</td><td class="r">${Math.round(g.bearing)}° ${compass(g.bearing)}</td>
     <td>${esc(g.best_call)}</td><td class="r" data-tip="${esc(g.calls.join(", "))}">${g.calls.length}</td><td class="r">${g.count}</td>
     <td class="mono">${ymdhm(g.first)}</td><td data-tip="${esc(ymdhm(g.last))} UTC">${ago(g.last)}</td></tr>`).join("");
   drawGridMap(list);
@@ -378,7 +400,7 @@ function drawGridMap(list) {
       const x = X(lon), y = Y(lat + 1);
       if (g) {
         const b = band(g.best_km);
-        const tip = `<b>${name}</b> � farthest ${esc(g.best_call)} ${km(g.best_km)} ${compass(g.bearing)}<br>${g.calls.length} station${g.calls.length === 1 ? "" : "s"} � ${g.count} paths<br>last ${ymdhm(g.last)} UTC`;
+        const tip = `<b>${name}</b> · farthest ${esc(g.best_call)} ${km(g.best_km)} ${compass(g.bearing)}<br>${g.calls.length} station${g.calls.length === 1 ? "" : "s"} · ${g.count} paths<br>last ${ymdhm(g.last)} UTC`;
         svg += `<rect class="heard" x="${x}" y="${y}" width="${cw}" height="${ch}" fill="var(--${b})" data-tip="${esc(tip)}"/>`;
         if (cw > 34) svg += `<text class="hlab${b === "d1" || b === "d2" ? " lt" : ""}" x="${x + cw / 2}" y="${y + ch / 2 + 4}" text-anchor="middle" pointer-events="none">${name}</text>`;
       } else {
@@ -405,11 +427,15 @@ async function pollPackets() {
   pkRows = pkRows.concat(add).slice(-500);
   renderPackets();
 }
+// Whose signal reached the antenna for this packet.
 function viaText(h) {
   switch (h.kind) {
-    case "direct": return `<span class="kind direct">direct</span> ${esc(h.via)}`;
-    case "digi": return `<span class="kind direct">direct</span> ${esc(h.via)} <span class="muted small">(digi)</span>`;
-    case "via-alias": return `<span class="kind">unknown digi</span>`;
+    case "direct": return `<b>${esc(h.via)}</b> <span class="kind direct">its own packet</span>`;
+    case "digi": return `<b>${esc(h.via)}</b> <span class="kind digi">relaying ${esc(h.src)}</span>`;
+    case "via-alias": return `<span class="muted">a digipeater that didn't add its call</span>`;
+    case "gateway": return `<span class="muted">none: came from the internet</span>`;
+    case "satellite": return `<span class="muted">satellite</span>`;
+    case "own": return `<span class="muted">your own call (not counted)</span>`;
     default: return `<span class="kind">${esc(h.kind)}</span>`;
   }
 }
@@ -423,7 +449,7 @@ function renderPackets() {
     }
     return `<tr class="${h.counted && overview && overview.state.far_km && h.km > overview.state.far_km ? "far" : ""}">
     <td class="mono">${hhmmss(h.time)}</td><td>${viaText(h)}</td>
-    <td class="r">${h.path_known ? Math.round(h.km) : ""}</td><td class="r">${h.has_level ? h.snr.toFixed(0) : ""}</td>
+    <td class="r">${h.path_known ? Math.round(h.km || 0) : ""}</td><td class="r">${h.has_level ? (h.snr || 0).toFixed(0) : ""}</td>
     <td class="call">${esc(h.src)}</td>
     <td class="wrap">${esc(h.summary || h.error || "")}${note}${raw ? `<div class="raw">${esc(h.raw)}</div>` : ""}</td></tr>`;
   }).join("");
