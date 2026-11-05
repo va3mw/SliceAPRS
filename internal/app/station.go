@@ -36,6 +36,7 @@ type Station struct {
 	an    *Analyzer
 	level *slog.LevelVar
 	log   *slog.Logger
+	alert alerter
 }
 
 // NewStation returns a station for the config at path. saved is false when
@@ -151,7 +152,7 @@ func (s *Station) analyzer(cfg *config.Config) (*Analyzer, error) {
 	if an != nil {
 		an.save()
 	}
-	an, err := newAnalyzer(cfg, s.log)
+	an, err := newAnalyzer(cfg, s.log, s.levelUp)
 	if err != nil {
 		return nil, err
 	}

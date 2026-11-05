@@ -11,7 +11,7 @@ func TestDefaultsAndResolve(t *testing.T) {
 	if err := c.Resolve(); err != nil {
 		t.Fatal(err)
 	}
-	if c.FreqHz != 144390000 || c.DAXIQ.Channel != 2 || c.Openings.DistanceKm != 300 || c.Openings.Sensitivity != "medium" {
+	if c.FreqHz != 144390000 || c.DAXIQ.Channel != 2 || c.Openings.DistanceKm != 300 || c.Openings.Sensitivity != "medium" || c.Alerts.Level != "enhanced" {
 		t.Fatalf("%+v", c)
 	}
 	c.Callsign, c.Grid = " va3mw-9 ", "fn25DK"
@@ -27,6 +27,9 @@ func TestDefaultsAndResolve(t *testing.T) {
 		func(c *Config) { c.FrequencyMHz = 0.5 },
 		func(c *Config) { c.Openings.Sensitivity = "max" },
 		func(c *Config) { c.Openings.DistanceKm = 10 },
+		func(c *Config) { c.Alerts.Level = "normal" },
+		func(c *Config) { c.Alerts.Pushover.Enabled = true; c.Alerts.Pushover.UserKey = "u" },
+		func(c *Config) { c.Alerts.Pushover.Priority = 2 },
 	} {
 		d := Default()
 		bad(d)

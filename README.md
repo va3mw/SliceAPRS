@@ -20,6 +20,7 @@ SliceAPRS is not a FlexRadio product. It is free and open source under the MIT L
 - Decodes in pure Go: FM demodulation, 1200 baud AFSK with tone-normalising correlators, several slicers and a digital PLL (the Dire Wolf approach), HDLC with bit unstuffing and the FCS check, AX.25 with the digipeater path and H bits, and APRS (plain, compressed and Mic-E positions, objects, items, status, weather, messages). Each packet's signal level is measured from the IQ.
 - **Who was heard:** the last digipeater with its H bit set, or the sender if no digipeater has repeated it. A relayed packet is measured to the digipeater (whose position is learned from its own beacons), never to the original sender. Internet (third-party, TCPIP), satellite/ISS, untraced aliases and your own call never count. Position jumps are held until a second report agrees.
 - **Normal range:** per UTC hour, the 90th percentile of each station's farthest direct distance per hour over 14 days. **Openings:** several stations beyond normal within 30 minutes, or any direct path over a set distance (300 km to start), with strength, direction and start/end, logged.
+- **Alerts:** a banner on the Openings tab, and optionally a spoken alert on the computer running SliceAPRS (Windows speech; espeak-ng on Linux) and a [Pushover](https://pushover.net/) message to your phone. Pushover needs your own user key and an API token from an application you create at pushover.net/apps/build. The keys are kept in the config file and never shown on the web page.
 
 ## GUI
 

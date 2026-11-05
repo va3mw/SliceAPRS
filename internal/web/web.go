@@ -4,6 +4,7 @@
 package web
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -98,7 +99,7 @@ func Handler(st *app.Station, opt Options) http.Handler {
 		writeJSON(w, http.StatusOK, out)
 	})
 	mux.HandleFunc("GET /api/config", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"config": st.Config(), "local": opt.Local})
+		writeJSON(w, http.StatusOK, configReply(st, opt))
 	})
 	mux.HandleFunc("POST /api/config", func(w http.ResponseWriter, r *http.Request) {
 		c := config.Default()
@@ -107,15 +108,36 @@ func Handler(st *app.Station, opt Options) http.Handler {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad settings: " + err.Error()})
 			return
 		}
+		cur := st.Config()
 		if !opt.Local {
-			cur := st.Config()
 			c.DataDir, c.Web.Listen = cur.DataDir, cur.Web.Listen
 		}
+		keepKeys(&c.Alerts.Pushover, cur.Alerts.Pushover)
 		if err := st.Apply(c); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"config": st.Config(), "local": opt.Local})
+		writeJSON(w, http.StatusOK, configReply(st, opt))
+	})
+	mux.HandleFunc("POST /api/alerts/test", func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			What   string        `json:"what"`
+			Alerts config.Alerts `json:"alerts"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<16)).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad request: " + err.Error()})
+			return
+		}
+		keepKeys(&req.Alerts.Pushover, st.Config().Alerts.Pushover)
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+		if err := st.TestAlert(ctx, req.What, req.Alerts); err != nil {
+			st.Log().Warn("alert test", "what", req.What, "err", err)
+			writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
+			return
+		}
+		st.Log().Info("alert test sent", "what", req.What)
+		writeJSON(w, http.StatusOK, map[string]string{"ok": "sent"})
 	})
 	mux.HandleFunc("GET /api/radios", func(w http.ResponseWriter, r *http.Request) {
 		radios, err := flex.DiscoverAll(r.Context(), 3*time.Second)
@@ -141,6 +163,27 @@ func Handler(st *app.Station, opt Options) http.Handler {
 		h = sameOrigin(h)
 	}
 	return h
+}
+
+// configReply is the settings as the page sees them. The Pushover keys are
+// never sent back: the page shows whether they are set, and a blank field
+// keeps the saved key.
+func configReply(st *app.Station, opt Options) map[string]any {
+	c := st.Config()
+	p := &c.Alerts.Pushover
+	set := map[string]bool{"user_key": p.UserKey != "", "token": p.Token != ""}
+	p.UserKey, p.Token = "", ""
+	return map[string]any{"config": c, "local": opt.Local, "pushover_set": set}
+}
+
+// keepKeys fills blank Pushover keys from the saved ones.
+func keepKeys(p *config.Pushover, saved config.Pushover) {
+	if p.UserKey == "" {
+		p.UserKey = saved.UserKey
+	}
+	if p.Token == "" {
+		p.Token = saved.Token
+	}
 }
 
 // sameOrigin refuses changes sent by other web sites: a page elsewhere could

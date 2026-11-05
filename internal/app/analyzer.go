@@ -29,8 +29,9 @@ func trackSettings(c *config.Config) track.Settings {
 		Sensitivity: c.Openings.Sensitivity, Satellite: track.IsSatelliteFreq(c.FreqHz)}
 }
 
-// newAnalyzer opens the data folder and loads the history.
-func newAnalyzer(c *config.Config, log *slog.Logger) (*Analyzer, error) {
+// newAnalyzer opens the data folder and loads the history. onUp is called
+// when the level rises after the history is loaded.
+func newAnalyzer(c *config.Config, log *slog.Logger, onUp func(string, track.Opening)) (*Analyzer, error) {
 	st, err := store.Open(c.DataDir)
 	if err != nil {
 		return nil, err
@@ -73,6 +74,7 @@ func newAnalyzer(c *config.Config, log *slog.Logger) (*Analyzer, error) {
 		}
 	})
 	a.tr.Evaluate(now)
+	a.tr.OnLevelUp(onUp) // after the first Evaluate: a restart mid-opening does not alert again
 	log.Info("history loaded", "data_dir", c.DataDir, "stations", len(a.tr.Stations()), "paths_14d", len(ps))
 	return a, nil
 }

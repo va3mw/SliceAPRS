@@ -156,6 +156,19 @@
         <p class="muted small" id="sensNote"></p>
       </fieldset>
       <fieldset>
+        <legend>Alerts</legend>
+        <label>Alert when 2 m is <select name="alerts.level"><option value="enhanced">Enhanced or Open</option><option value="open">Open only</option></select></label>
+        <p class="muted small">An alert goes out when the band rises to this level, and again if it rises from Enhanced to Open. The same level does not alert again within 30 minutes. The banner on the Openings tab always shows.</p>
+        <label class="check"><input type="checkbox" name="alerts.voice"> Speak alerts</label>
+        <div class="row"><button type="button" class="ghost" id="testVoice">Test voice</button><span class="muted small" id="voiceNote">Spoken on the computer running SliceAPRS. On Linux, install espeak-ng.</span></div>
+        <label class="check"><input type="checkbox" name="alerts.pushover.enabled"> Send alerts with Pushover</label>
+        <p class="muted small push">Pushover sends alerts to your phone. Make an account at <a href="https://pushover.net/" target="_blank" rel="noopener">pushover.net</a> and install its app: it is free to try, then a one-time purchase per platform. Your user key is on your Pushover dashboard. For the API token, create an application named SliceAPRS at <a href="https://pushover.net/apps/build" target="_blank" rel="noopener">pushover.net/apps/build</a>.</p>
+        <label class="push">User key <input name="alerts.pushover.user_key" spellcheck="false" autocomplete="off"></label>
+        <label class="push">API token <input name="alerts.pushover.token" spellcheck="false" autocomplete="off"></label>
+        <label class="push">Priority <select name="alerts.pushover.priority"><option value="-2">Lowest (no notification)</option><option value="-1">Quiet (no sound)</option><option value="0">Normal</option><option value="1">High (bypasses quiet hours)</option></select></label>
+        <div class="row push"><button type="button" class="ghost" id="testPush">Test Pushover</button><span class="muted small" id="pushNote">Saved keys stay in the config file and are not shown on this page again.</span></div>
+      </fieldset>
+      <fieldset>
         <legend>Web page and files</legend>
         <p class="muted small" id="localNote" hidden>These can only be changed in the config file or the desktop app.</p>
         <label>Web page port <input id="webPort" class="sys" type="number" min="1" max="65535" placeholder="blank: no web page"></label>
@@ -217,6 +230,7 @@
         </ul>
         <p class="muted">An opening starts with its first far packet and ends at the last one, once 30 minutes pass with none. Its direction is the average bearing of the far stations; its strength rates how many there were and how far beyond normal.</p>
         <dl id="rulesTable"></dl>
+        <p><b>Alerts</b>: when the band rises to Enhanced (or only Open, if you choose), SliceAPRS can speak the alert on the computer it runs on and send it to your phone with <a href="https://pushover.net/" target="_blank" rel="noopener">Pushover</a>. Set them up in <b>Settings → Alerts</b> and use the test buttons there. A rise from Enhanced to Open alerts again; the same level does not alert again within 30 minutes. Restarting SliceAPRS during an opening does not repeat the alert.</p>
       </div>
       <div class="panel">
         <h2>The tabs</h2>

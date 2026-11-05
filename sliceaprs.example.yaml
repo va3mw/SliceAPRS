@@ -12,6 +12,14 @@ daxiq:
 openings:
   distance_km: 300         # any direct path this long is an opening
   sensitivity: medium      # low, medium or high
+alerts:
+  level: enhanced          # lowest level that alerts: enhanced or open
+  voice: false             # speak alerts on this computer
+  pushover:                # phone alerts through https://pushover.net/
+    enabled: false
+    user_key: ""           # your user key, from the Pushover dashboard
+    token: ""              # API token of an application you create at pushover.net/apps/build
+    priority: 0            # -2 lowest, -1 quiet, 0 normal, 1 high
 web:
   listen: 127.0.0.1:8081   # ":8081" for other computers, "off" for none
 data_dir: ""               # blank: %ProgramData%\SliceAPRS\data or /var/lib/sliceaprs

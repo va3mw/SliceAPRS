@@ -3,6 +3,7 @@ package track
 import (
 	"fmt"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -158,6 +159,8 @@ func TestOpeningDetection(t *testing.T) {
 	tr := newT()
 	var done []Opening
 	tr.OnOpeningDone(func(o Opening) { done = append(done, o) })
+	var ups []string
+	tr.OnLevelUp(func(l string, o Opening) { ups = append(ups, l+":"+o.MaxCall) })
 	start := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
 	for d := 0; d < 10; d++ {
 		local(t, tr, start.AddDate(0, 0, d))
@@ -217,6 +220,9 @@ func TestOpeningDetection(t *testing.T) {
 	feed(t, tr, t0.Add(2*time.Hour), "K3LONG>APRS:"+PosInfo(la, lo, '-'))
 	if s := tr.State(t0.Add(2 * time.Hour)); s.Level != LevelOpen {
 		t.Fatalf("320 km: %s", s.Level)
+	}
+	if got := strings.Join(ups, " "); got != "enhanced:W2AAA open:W2AB1 open:K3LONG" {
+		t.Fatalf("level rises: %s", got)
 	}
 }
 

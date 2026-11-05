@@ -42,6 +42,8 @@ type Config struct {
 		Sensitivity string `yaml:"sensitivity" json:"sensitivity"`
 	} `yaml:"openings" json:"openings"`
 
+	Alerts Alerts `yaml:"alerts" json:"alerts"`
+
 	Web struct {
 		// Listen is the address of the built-in web page, e.g. ":8080";
 		// "off" turns it off.
@@ -52,6 +54,24 @@ type Config struct {
 	Debug   bool   `yaml:"debug" json:"debug"`
 
 	FreqHz int64 `yaml:"-" json:"-"` // resolved from FrequencyMHz
+}
+
+// Alerts are the voice and Pushover alerts sent when the band opens.
+type Alerts struct {
+	// Level is the lowest level that alerts: enhanced or open.
+	Level string `yaml:"level" json:"level"`
+	// Voice speaks alerts on the computer running SliceAPRS.
+	Voice    bool     `yaml:"voice" json:"voice"`
+	Pushover Pushover `yaml:"pushover" json:"pushover"`
+}
+
+// Pushover sends alerts to phones through pushover.net.
+type Pushover struct {
+	Enabled bool   `yaml:"enabled" json:"enabled"`
+	UserKey string `yaml:"user_key" json:"user_key"` // your user (or group) key
+	Token   string `yaml:"token" json:"token"`       // the API token of your Pushover application
+	// Priority: -2 lowest, -1 quiet, 0 normal, 1 high.
+	Priority int `yaml:"priority" json:"priority"`
 }
 
 // IQRate is the DAX IQ rate SliceAPRS asks for.
@@ -96,6 +116,7 @@ func Default() *Config {
 	c.DAXIQ.Channel = 2 // FlexWSPR uses 1
 	c.Openings.DistanceKm = 300
 	c.Openings.Sensitivity = "medium"
+	c.Alerts.Level = "enhanced"
 	c.Web.Listen = DefaultListen
 	return c
 }
@@ -151,6 +172,22 @@ func (c *Config) Resolve() error {
 	case "low", "medium", "high":
 	default:
 		return fmt.Errorf("openings.sensitivity must be low, medium or high, got %q", c.Openings.Sensitivity)
+	}
+	c.Alerts.Level = strings.ToLower(strings.TrimSpace(c.Alerts.Level))
+	switch c.Alerts.Level {
+	case "":
+		c.Alerts.Level = "enhanced"
+	case "enhanced", "open":
+	default:
+		return fmt.Errorf("alerts.level must be enhanced or open, got %q", c.Alerts.Level)
+	}
+	po := &c.Alerts.Pushover
+	po.UserKey, po.Token = strings.TrimSpace(po.UserKey), strings.TrimSpace(po.Token)
+	if po.Priority < -2 || po.Priority > 1 {
+		return fmt.Errorf("alerts.pushover.priority must be -2 to 1, got %d", po.Priority)
+	}
+	if po.Enabled && (po.UserKey == "" || po.Token == "") {
+		return fmt.Errorf("Pushover needs your user key and an API token")
 	}
 	if c.DataDir == "" {
 		c.DataDir = DefaultDataDir()

@@ -110,6 +110,7 @@ func (t *Tracker) Evaluate(now time.Time) {
 			abs = true
 		}
 	}
+	prev := t.level
 	level := LevelNormal
 	switch {
 	case abs || len(far) >= r.Open:
@@ -179,7 +180,15 @@ func (t *Tracker) Evaluate(now time.Time) {
 		o.Direction = "several directions"
 	}
 	o.Strength = strength(o)
+	if rank(level) > rank(prev) && t.onLevelUp != nil {
+		c := *o
+		c.Stations = append([]FarStation(nil), o.Stations...)
+		t.onLevelUp(level, c)
+	}
 }
+
+// LevelRank orders the levels: normal 0, enhanced 1, open 2.
+func LevelRank(l string) int { return rank(l) }
 
 func (o *Opening) lastSeen() time.Time {
 	var last time.Time

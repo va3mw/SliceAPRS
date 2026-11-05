@@ -63,6 +63,7 @@ type Tracker struct {
 	cur        *Opening
 	level      string
 	onOpenDone func(Opening)
+	onLevelUp  func(string, Opening)
 }
 
 // New returns a tracker.
@@ -89,6 +90,11 @@ func (t *Tracker) SetSettings(s Settings) {
 
 // OnOpeningDone sets a function called when an opening ends.
 func (t *Tracker) OnOpeningDone(fn func(Opening)) { t.onOpenDone = fn }
+
+// OnLevelUp sets a function called when the level rises to enhanced or
+// open, with the opening so far. It runs inside Evaluate, so it must not
+// block or call back into the tracker.
+func (t *Tracker) OnLevelUp(fn func(level string, o Opening)) { t.onLevelUp = fn }
 
 func (t *Tracker) station(call string, now time.Time) *Station {
 	s := t.stations[call]

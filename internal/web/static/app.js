@@ -22,7 +22,7 @@ const band = (v) => bands.find((b) => v < b[0])[1];
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue("--" + n).trim();
 $("#kmLegend").innerHTML = bands.map((b) => `<span><i class="sw ${b[1]}"></i>${b[2]}</span>`).join("");
 
-let cfg = null, local = false, status = null, overview = null;
+let cfg = null, local = false, keysSet = {}, status = null, overview = null;
 
 async function api(path, body) {
   const opt = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
@@ -557,7 +557,34 @@ function fillSettings() {
   $("#localNote").hidden = local;
   $("#cfgPath").textContent = status ? "Config file: " + status.config_path : "";
   sensNote();
+  for (const k of ["user_key", "token"]) {
+    f.elements["alerts.pushover." + k].placeholder = keysSet[k] ? "saved (type to replace)" : "";
+  }
+  pushNote();
 }
+
+function pushNote() {
+  const on = $("#settings").elements["alerts.pushover.enabled"].checked;
+  $$(".push", $("#settings")).forEach((el) => (el.hidden = !on));
+}
+$("#settings").elements["alerts.pushover.enabled"].addEventListener("change", pushNote);
+
+async function testAlert(what, btn, note) {
+  note.textContent = what === "voice" ? "speaking…" : "sending…";
+  note.className = "muted small";
+  btn.disabled = true;
+  try {
+    await api("/api/alerts/test", { what, alerts: readSettings().alerts });
+    note.textContent = what === "voice" ? "spoken ✓" : "sent ✓ check your phone";
+  } catch (e) {
+    note.textContent = e.message;
+    note.className = "err small";
+  } finally {
+    btn.disabled = false;
+  }
+}
+$("#testVoice").addEventListener("click", () => testAlert("voice", $("#testVoice"), $("#voiceNote")));
+$("#testPush").addEventListener("click", () => testAlert("pushover", $("#testPush"), $("#pushNote")));
 
 function readSettings() {
   const c = clone(cfg);
@@ -565,7 +592,7 @@ function readSettings() {
     if (!el.name) continue;
     let v;
     if (el.type === "checkbox") v = el.checked;
-    else if (el.name === "daxiq.channel") v = parseInt(el.value, 10) || 0;
+    else if (el.name === "daxiq.channel" || el.name === "alerts.pushover.priority") v = parseInt(el.value, 10) || 0;
     else if (el.name === "frequency_mhz" || el.name === "openings.distance_km") v = parseFloat(el.value) || 0;
     else v = el.value.trim();
     setPath(c, el.name, v);
@@ -585,6 +612,7 @@ $("#saveSet").addEventListener("click", async () => {
     const j = await api("/api/config", readSettings());
     cfg = j.config;
     local = j.local;
+    keysSet = j.pushover_set || {};
     fillSettings();
     btn.textContent = "Saved ✓";
     setTimeout(() => (btn.textContent = btn.dataset.label), 1500);
@@ -623,6 +651,7 @@ $("#findRadios").addEventListener("click", async () => {
     const j = await api("/api/config");
     cfg = j.config;
     local = j.local;
+    keysSet = j.pushover_set || {};
   } catch (e) {
     $("#banner").textContent = "Cannot reach SliceAPRS: " + e.message;
     $("#banner").hidden = false;
