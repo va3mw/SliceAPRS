@@ -166,6 +166,7 @@ function renderOverview(o) {
   const latest = new Map();
   for (const p of o.paths) latest.set(p.call, p);
   const paths = [...latest.values()].sort((a, b) => new Date(a.t) - new Date(b.t));
+  lastPaths = paths;
   drawMap(o, paths);
   drawPolar(o, paths);
   drawHeat(o);
@@ -175,6 +176,16 @@ function renderOverview(o) {
 // Map: Leaflet from a CDN; tiles need internet. Without either, the map
 // panel says so and the plots carry on.
 let map = null, mapLayer = null, mapState = "loading", tileOK = 0, tileErr = 0;
+let showMobiles = false;
+try { showMobiles = localStorage.getItem("mobiles") === "1"; } catch {}
+$("#showMobiles").checked = showMobiles;
+$("#mobLegend").hidden = !showMobiles;
+$("#showMobiles").addEventListener("change", (e) => {
+  showMobiles = e.target.checked;
+  try { localStorage.setItem("mobiles", showMobiles ? "1" : "0"); } catch {}
+  $("#mobLegend").hidden = !showMobiles;
+  if (overview) drawMap(overview, lastPaths);
+});
 function loadLeaflet() {
   const css = document.createElement("link");
   css.rel = "stylesheet";
@@ -193,8 +204,11 @@ function mapOff(why) {
   $("#map").textContent = why;
 }
 
+let lastPaths = [];
 function drawMap(o, paths) {
-  $("#mapNote").textContent = `${paths.length} station${paths.length === 1 ? "" : "s"}`;
+  const mobs = showMobiles ? (o.mobiles || []) : [];
+  $("#mapNote").textContent = `${paths.length} station${paths.length === 1 ? "" : "s"}` +
+    (showMobiles ? ` · ${mobs.length} mobile${mobs.length === 1 ? "" : "s"}` : "");
   if (mapState !== "ready" || !window.L) return;
   if (!map) {
     map = L.map("map", { worldCopyJump: true }).setView([o.home_lat, o.home_lon], 7);
@@ -220,9 +234,42 @@ function drawMap(o, paths) {
       .addTo(mapLayer);
     pts.push([p.lat, p.lon]);
   }
+  drawMobiles(mobs, now);
   if (!map._fitted && pts.length > 1) {
     map.fitBounds(pts, { padding: [24, 24], maxZoom: 9 });
     map._fitted = true;
+  }
+}
+
+// Mobiles: moving stations however they were heard. Not part of openings.
+function mobVia(m) {
+  if (!m.via) return "heard directly";
+  if (m.via === "via-alias") return "through a digipeater that did not add its call";
+  if (m.via === "own") return "your own callsign";
+  if (!/[0-9]/.test(m.via) || m.via === "gateway" || m.via === "satellite") return esc(m.via);
+  return "through " + esc(m.via);
+}
+function drawMobiles(mobs, now) {
+  const col = cssVar("mob");
+  for (const m of mobs) {
+    const age = (now - new Date(m.t)) / 60000;
+    const op = age < 15 ? 1 : Math.max(0.4, 1 - age / 90);
+    if (m.trail.length > 1) {
+      L.polyline(m.trail.map((p) => [p.lat, p.lon]), { color: col, weight: 2, opacity: 0.7 * op, interactive: false }).addTo(mapLayer);
+    }
+    if (m.via_pos) {
+      L.polyline([[m.lat, m.lon], [m.via_lat, m.via_lon]], { color: col, weight: 1.5, opacity: 0.8 * op, dashArray: "4 5", interactive: false }).addTo(mapLayer);
+    }
+    const moving = m.has_course && m.speed_kmh > 0;
+    const shape = moving
+      ? `<path d="M0,-8 L6,6 L0,3 L-6,6 Z" transform="rotate(${m.course})"/>`
+      : `<rect x="-5" y="-5" width="10" height="10" rx="2"/>`;
+    const icon = L.divIcon({ className: "mobicon", iconSize: [18, 18], iconAnchor: [9, 9],
+      html: `<svg width="18" height="18" viewBox="-9 -9 18 18"><g fill="${col}" fill-opacity="${op}" stroke="${cssVar("panel") || "#fff"}" stroke-width="1.5">${shape}</g></svg>` });
+    const speed = moving ? `${Math.round(m.speed_kmh)} km/h ${compass(m.course)}` : m.has_course ? "stopped" : "";
+    L.marker([m.lat, m.lon], { icon, keyboard: false })
+      .bindTooltip(`<b>${esc(m.call)}</b> mobile${speed ? " · " + speed : ""}<br>${km(m.km)} · ${Math.round(m.brg)}° ${compass(m.brg)} · ${mobVia(m)}<br>${hhmm(m.t)} UTC, ${Math.round(age)} min ago`)
+      .addTo(mapLayer);
   }
 }
 

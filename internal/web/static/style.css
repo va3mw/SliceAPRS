@@ -167,6 +167,7 @@ pre.license { font-size: 12px; white-space: pre-wrap; margin: 0; color: var(--mu
   --d1: #86b6ef; --d2: #5598e7; --d3: #2a78d6; --d4: #1c5cab; --d5: #0d366b;
   --lv-normal: #8d8a8d; --lv-enh: #c28a0e; --lv-open: #2eb67d;
   --r0: #ebe8eb; --r1: #b7d3f6; --r2: #5598e7; --r3: #1c5cab;
+  --mob: #d4600c; /* mobiles on the map */
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -174,8 +175,11 @@ pre.license { font-size: 12px; white-space: pre-wrap; margin: 0; color: var(--mu
     --d1: #256abf; --d2: #3987e5; --d3: #6da7ec; --d4: #9ec5f4; --d5: #cde2fb;
     --lv-normal: #8d8a8d; --lv-enh: #ecb22e; --lv-open: #2eb67d;
     --r0: #2c2d30; --r1: #184f95; --r2: #2a78d6; --r3: #86b6ef;
+    --mob: #f08a4b;
   }
 }
+.legend i.sw.mob { background: var(--mob); }
+.mobicon svg { display: block; overflow: visible; }
 .freqnow b { font-size: 18px; }
 .pill.running::before, .pill.replay::before { background: var(--ok); }
 .pill.replay, .pill.done { background: rgba(255,255,255,.22); }

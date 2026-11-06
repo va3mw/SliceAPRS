@@ -47,9 +47,11 @@
 
     <div class="split2">
       <div class="panel" id="mapPanel">
-        <h2>Direct paths, last hour <span class="muted small" id="mapNote"></span></h2>
+        <h2>Direct paths, last hour <span class="muted small" id="mapNote"></span>
+          <span class="inline"><label class="check" title="Moving stations heard in the last hour, however they reached you. They do not count for openings."><input type="checkbox" id="showMobiles"> Mobiles</label></span></h2>
         <div id="map"></div>
         <div class="legend small muted" id="kmLegend"></div>
+        <div class="legend small muted" id="mobLegend" hidden><span><i class="sw mob"></i>Mobile: an arrow pointing its way, or a square when stopped · trail of the last hour · dashed line to the digipeater that relayed it. Mobiles do not count for openings.</span></div>
       </div>
       <div class="panel">
         <h2>Bearing and distance, last hour <span class="muted small" id="polarNote"></span></h2>
@@ -231,6 +233,7 @@
         <p class="muted">An opening starts with its first far packet and ends at the last one, once 30 minutes pass with none. Its direction is the average bearing of the far stations; its strength rates how many there were and how far beyond normal.</p>
         <dl id="rulesTable"></dl>
         <p><b>Alerts</b>: when the band rises to Enhanced (or only Open, if you choose), SliceAPRS can speak the alert on the computer it runs on and send it to your phone with <a href="https://pushover.net/" target="_blank" rel="noopener">Pushover</a>. Set them up in <b>Settings → Alerts</b> and use the test buttons there. A rise from Enhanced to Open alerts again; the same level does not alert again within 30 minutes. Restarting SliceAPRS during an opening does not repeat the alert.</p>
+        <p><b>Mobiles</b>: tick <b>Mobiles</b> above the map to show moving stations heard in the last hour, however they reached you, including through digipeaters. A station is a mobile if its APRS symbol is a vehicle, boat, aircraft or person, or if it reports a speed. Each shows as an arrow pointing its way (a square when stopped) with its trail for the last hour, and a dashed line to the digipeater that relayed it. Mobiles are only for looking at: they do not count for openings. Trails start again when SliceAPRS restarts.</p>
       </div>
       <div class="panel">
         <h2>The tabs</h2>

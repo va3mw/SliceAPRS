@@ -86,6 +86,10 @@ type Station struct {
 	Pending    *Pos      `json:"pending,omitempty"` // a jump waiting for a second report
 	Symbol     string    `json:"symbol,omitempty"`
 	Comment    string    `json:"comment,omitempty"`
+	// Course and speed from its last position report, if it sent them.
+	HasCourse bool    `json:"has_course,omitempty"`
+	Course    int     `json:"course,omitempty"`
+	SpeedKmh  float64 `json:"speed_kmh,omitempty"`
 
 	FirstHeard time.Time `json:"first_heard"`
 	LastHeard  time.Time `json:"last_heard"`
@@ -267,7 +271,22 @@ func (t *Tracker) Packet(now time.Time, f *ax25.Frame, p *aprs.Packet, perr erro
 		if src.HasPos {
 			h.LastPos = &Pos{Lat: src.Lat, Lon: src.Lon, Time: src.PosTime, Km: src.Km}
 		}
+		if p.HasCourse {
+			src.HasCourse, src.Course, src.SpeedKmh = true, p.Course, round1(p.SpeedKt*1.852)
+		} else {
+			src.HasCourse, src.Course, src.SpeedKmh = false, 0, 0
+		}
 		jump = !t.updatePos(src, pkt)
+		if !jump {
+			via := h.Kind
+			switch h.Kind {
+			case KindDirect:
+				via = ""
+			case KindDigi:
+				via = h.Via
+			}
+			t.addTrail(src, via)
+		}
 	}
 
 	if h.Kind != KindDirect && h.Kind != KindDigi {

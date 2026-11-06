@@ -154,6 +154,7 @@ type Overview struct {
 	Day      []track.HourCell `json:"day"`
 	Openings []track.Opening  `json:"openings"`
 	Paths    []track.Path     `json:"paths"` // last hour, oldest first
+	Mobiles  []track.Mobile   `json:"mobiles"`
 	HomeLat  float64          `json:"home_lat"`
 	HomeLon  float64          `json:"home_lon"`
 }
@@ -164,7 +165,7 @@ func (a *Analyzer) Overview(lat, lon float64) Overview {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	o := Overview{State: a.tr.State(now), Day: a.tr.Day(now), Openings: a.tr.Openings(),
-		Paths: a.tr.Paths(now.Add(-time.Hour)), HomeLat: lat, HomeLon: lon}
+		Paths: a.tr.Paths(now.Add(-time.Hour)), Mobiles: a.tr.Mobiles(now), HomeLat: lat, HomeLon: lon}
 	if len(o.Openings) > 200 {
 		o.Openings = o.Openings[:200]
 	}

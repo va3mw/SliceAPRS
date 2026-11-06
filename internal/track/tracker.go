@@ -64,12 +64,13 @@ type Tracker struct {
 	level      string
 	onOpenDone func(Opening)
 	onLevelUp  func(string, Opening)
+	trails     map[string]*trail // mobiles, last MobileWindow
 }
 
 // New returns a tracker.
 func New(s Settings) *Tracker {
 	return &Tracker{set: s, stations: map[string]*Station{}, agg: map[aggKey]float64{},
-		hours: map[int64]int{}, grids: map[string]*Grid{}, usual: map[string]bool{}, level: LevelNormal}
+		hours: map[int64]int{}, grids: map[string]*Grid{}, usual: map[string]bool{}, trails: map[string]*trail{}, level: LevelNormal}
 }
 
 // SetSettings changes the settings, keeping the history. Distances and
