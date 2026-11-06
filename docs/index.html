@@ -214,7 +214,7 @@ sliceaprs</code></pre>
   <h3>Which radios does it work with?</h3>
   <p>Supported radios are those that can receive your local APRS frequency, usually through a 2 m transverter. It has been tested with a 2 m transverter on XVTA, firmware v4.4.0. SliceAPRS connects as a GUI client, so on radios with few client connections SmartSDR may not be able to connect at the same time.</p>
   <h3>Can it run next to FlexWSPR or SmartSDR?</h3>
-  <p>Yes, as long as each uses its own DAX IQ channel. SliceAPRS uses channel 2 by default and refuses to start on a channel another program is using.</p>
+  <p>Yes, as long as each uses its own DAX IQ channel. SliceAPRS uses channel 2 by default and refuses to start on a channel another program is using. If another program changes SliceAPRS's panadapter or slice while it runs (moves it off 2 m, or changes its antenna), SliceAPRS notices within 15 seconds and asks whether to restore it.</p>
   <h3>Is it an iGate or a digipeater?</h3>
   <p>No. SliceAPRS only listens. It never transmits and sends nothing to APRS-IS.</p>
   <h3>Why do far stations not count as an opening?</h3>
