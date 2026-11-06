@@ -30,6 +30,9 @@ type Decoder struct {
 
 // Status is a snapshot of the receiver for the GUI.
 type Status struct {
+	// Changed lists what another program changed on our panadapter or
+	// slice; the GUI asks whether to restore it.
+	Changed     []string  `json:"changed,omitempty"`
 	Version     string    `json:"version"`
 	State       string    `json:"state"`
 	Error       string    `json:"error,omitempty"`
@@ -74,6 +77,7 @@ func (m *monitor) snapshot() Status {
 	s := m.st
 	s.Antennas = append([]string(nil), s.Antennas...)
 	s.Others = append([]string(nil), s.Others...)
+	s.Changed = append([]string(nil), s.Changed...)
 	s.Decoder.Slicers = append([]int(nil), s.Decoder.Slicers...)
 	s.Now = time.Now().UTC()
 	return s

@@ -468,6 +468,11 @@ func (r *Radio) Command(cmd string) (string, error) {
 		if rep.code != 0 {
 			return rep.msg, fmt.Errorf("radio refused %q (0x%08X %s)", cmd, rep.code, rep.msg)
 		}
+		// The radio does not always send a status for a panadapter setting
+		// the client made itself, so note it.
+		if rest, ok := strings.CutPrefix(cmd, "display pan set "); ok {
+			r.handleStatus("display pan " + rest)
+		}
 		return rep.msg, nil
 	case <-time.After(5 * time.Second):
 		r.mu.Lock()
@@ -495,3 +500,13 @@ func FirstHex(s string) (uint32, error) {
 	}
 	return 0, fmt.Errorf("no id in reply %q", s)
 }
+
+// Offline returns a radio with no connection whose state is fed with
+// Status, for tests of code that reads it.
+func Offline(handle uint32) *Radio {
+	return &Radio{done: make(chan struct{}), pending: map[uint32]chan reply{}, pans: map[uint32]*Pan{},
+		clients: map[uint32]Client{}, streams: map[uint32]Stream{}, slices: map[int]Slice{}, handle: handle}
+}
+
+// Status applies one status line body, as if the radio had sent it.
+func (r *Radio) Status(body string) { r.handleStatus(body) }

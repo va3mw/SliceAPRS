@@ -97,8 +97,13 @@ function renderStatus(s) {
     (d.lost ? `, ${d.lost} IQ packets lost` : "") + (d.has_floor ? `, noise floor ${d.floor_db.toFixed(1)} dBFS` : "") +
     (d.slicers && d.slicers.length ? ` · per slicer ${d.slicers.join(" ")}` : "") + (s.others && s.others.length ? ` · also on the radio: ${s.others.join(", ")}` : "");
 
+  askRestore(s);
   const banner = $("#banner");
-  if (s.state === "setup") {
+  if (s.changed && s.changed.length) {
+    banner.innerHTML = `The radio was changed (${esc(s.changed.join("; "))}). SliceAPRS can't hear APRS until it is restored. <button class="primary" id="bannerRestore">Restore</button>`;
+    $("#bannerRestore").onclick = restoreRadio;
+    banner.hidden = false;
+  } else if (s.state === "setup") {
     banner.innerHTML = "Welcome. Enter your callsign and grid in <b>Settings</b> and press <b>Save and restart</b> to start receiving.";
     banner.hidden = false;
   } else if (s.state === "error" && s.error) {
@@ -109,6 +114,31 @@ function renderStatus(s) {
     banner.hidden = false;
   } else banner.hidden = true;
 }
+
+// Another program changed our panadapter or slice: ask once per change
+// whether to put it back.
+let leftAlone = "";
+function askRestore(s) {
+  const dlg = $("#radioDlg");
+  const key = (s.changed || []).join("; ");
+  if (!key) {
+    leftAlone = "";
+    if (dlg.open) dlg.close();
+    return;
+  }
+  if (key === leftAlone) return;
+  $("#radioChanges").innerHTML = s.changed.map((c) => `<li>${esc(c)}</li>`).join("");
+  $("#radioWho").textContent = s.others && s.others.length ? "Also on the radio: " + s.others.join(", ") : "No other program is connected now.";
+  if (!dlg.open) dlg.showModal();
+}
+async function restoreRadio() {
+  $("#radioDlg").close();
+  try { await api("/api/radio/restore", {}); } catch {}
+  setTimeout(pollStatus, 1500);
+}
+$("#radioRestore").addEventListener("click", restoreRadio);
+$("#radioLeave").addEventListener("click", () => { leftAlone = (status && status.changed || []).join("; "); $("#radioDlg").close(); });
+$("#radioDlg").addEventListener("cancel", () => { leftAlone = (status && status.changed || []).join("; "); });
 
 // ---------- openings ----------
 let hiddenLevel = "";

@@ -26,17 +26,18 @@ type Station struct {
 	// RecordIQ, when set, writes the radio's IQ to this WAV file.
 	RecordIQ string
 
-	path  string
-	mon   monitor
-	mu    sync.Mutex
-	cfg   *config.Config
-	saved bool
-	apply chan struct{}
-	onCfg []func(*config.Config)
-	an    *Analyzer
-	level *slog.LevelVar
-	log   *slog.Logger
-	alert alerter
+	path    string
+	mon     monitor
+	mu      sync.Mutex
+	cfg     *config.Config
+	saved   bool
+	apply   chan struct{}
+	onCfg   []func(*config.Config)
+	an      *Analyzer
+	level   *slog.LevelVar
+	log     *slog.Logger
+	alert   alerter
+	restore chan struct{} // the GUI asked to restore the radio
 }
 
 // NewStation returns a station for the config at path. saved is false when
@@ -225,8 +226,26 @@ func (s *Station) runOnce(ctx context.Context, cfg *config.Config) {
 		<-ctx.Done()
 		return
 	}
-	(&radioRun{cfg: cfg, log: s.log, mon: &s.mon, an: an, record: s.RecordIQ}).run(ctx)
+	(&radioRun{cfg: cfg, log: s.log, mon: &s.mon, an: an, record: s.RecordIQ, restore: s.restoreCh()}).run(ctx)
 	s.log.Info("SliceAPRS stopped")
 }
 
 func round1(v float64) float64 { return math.Round(v*10) / 10 }
+
+func (s *Station) restoreCh() chan struct{} {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.restore == nil {
+		s.restore = make(chan struct{}, 1)
+	}
+	return s.restore
+}
+
+// RestoreRadio puts our panadapter and slice back where SliceAPRS set
+// them, after another program changed them.
+func (s *Station) RestoreRadio() {
+	select {
+	case s.restoreCh() <- struct{}{}:
+	default:
+	}
+}

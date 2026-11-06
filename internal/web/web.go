@@ -45,6 +45,10 @@ func Handler(st *app.Station, opt Options) http.Handler {
 	mux.HandleFunc("GET /api/status", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, st.Status())
 	})
+	mux.HandleFunc("POST /api/radio/restore", func(w http.ResponseWriter, r *http.Request) {
+		st.RestoreRadio()
+		writeJSON(w, http.StatusAccepted, map[string]bool{"ok": true})
+	})
 	mux.HandleFunc("GET /api/overview", func(w http.ResponseWriter, r *http.Request) {
 		an := st.Analyzer()
 		if an == nil {

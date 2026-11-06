@@ -31,6 +31,15 @@
 
 <main>
   <div id="banner" class="banner" hidden></div>
+  <dialog id="radioDlg">
+    <h3>The radio was changed</h3>
+    <p>Something changed SliceAPRS's panadapter or slice on the radio:</p>
+    <ul id="radioChanges"></ul>
+    <p class="small muted" id="radioWho"></p>
+    <p>SliceAPRS can't hear APRS until it is put back. Restore it now?</p>
+    <div class="row dlgbtns"><button class="primary" id="radioRestore">Restore</button><button id="radioLeave">Leave it</button></div>
+  </dialog>
+
   <div id="alert" class="alert" hidden>
     <div class="alert-main"><b id="alertTitle"></b> <span id="alertText"></span></div>
     <button class="ghost" id="alertHide" title="Hide until the level changes">Hide</button>

@@ -23,11 +23,12 @@ func (e errBusy) Error() string { return e.msg }
 
 // radioRun connects to the radio and reconnects until ctx is cancelled.
 type radioRun struct {
-	cfg    *config.Config
-	log    *slog.Logger
-	mon    *monitor
-	an     *Analyzer
-	record string // optional IQ recording file
+	cfg     *config.Config
+	log     *slog.Logger
+	mon     *monitor
+	an      *Analyzer
+	record  string        // optional IQ recording file
+	restore chan struct{} // the GUI asked to restore the radio
 }
 
 func (a *radioRun) run(ctx context.Context) {
@@ -252,13 +253,35 @@ func (a *radioRun) session(ctx context.Context) error {
 
 	iqErr := make(chan error, 1)
 	go func() { iqErr <- a.receiveIQ(udp, net.ParseIP(ip), &sidA) }()
-	select {
-	case <-ctx.Done():
-		return nil
-	case <-r.Done():
-		return r.Err()
-	case err := <-iqErr:
-		return err
+
+	// Check every cycle that our panadapter and slice are still on 2 m:
+	// another program on the radio can move the receiver under us.
+	t := &tuning{r: r, cmd: cmd, pan: pan, panID: panID, freq: freq, rxant: rxant,
+		channel: a.cfg.DAXIQ.Channel, others: map[uint32]string{}}
+	for _, c := range r.Clients() {
+		t.others[c.Handle] = clientName(c)
+	}
+	tick := time.NewTicker(watchEvery)
+	defer tick.Stop()
+	settled := time.Now().Add(settleTime)
+	defer a.mon.set(func(s *Status) { s.Changed = nil })
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.Done():
+			return r.Err()
+		case err := <-iqErr:
+			return err
+		case <-tick.C:
+			if err := a.check(t, time.Now().Before(settled)); err != nil {
+				return err
+			}
+		case <-a.restore:
+			if err := a.restoreRadio(t); err != nil {
+				return err
+			}
+		}
 	}
 }
 
